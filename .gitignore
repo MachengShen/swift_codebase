@@ -1,4 +1,5 @@
 # Repo Specific
+.idea
 models
 fig_data
 notebooks
