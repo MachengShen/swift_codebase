@@ -1,0 +1,4 @@
+torch==0.4.0
+gym==0.9.4
+tensorboardX
+seaborn
