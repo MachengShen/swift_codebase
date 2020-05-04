@@ -1,6 +1,7 @@
 import numpy as np
 from multiagent.core import World, Agent, Landmark, Wall
 from multiagent.scenario import BaseScenario
+from enum import Enum
 
 class DummyAgent(Landmark):
 	#super class of red and grey agent that use pre-defined policies
@@ -28,35 +29,82 @@ class GreyAgent(DummyAgent):
 		self.color = np.array([0.2, 0.2, 0.2])
 		self.is_red = False
 
+@unique
+class CellLocation(Enum):
+	#Enumeration of celllocations within a room
+	UpperLeft = 1
+	UpperRight = 2
+	BottomLeft = 3
+	BottomRight = 4
+
+@unique
+class CellState(Enum):
+	Unexplored = 1
+	ExploredNoAgent = 2
+	ExploredHasAgent = 3
+
 class Room_cell(object):
-	def __init__(self):
+	def __init__(self, center, cell_location, cell_state=CellState.Unexplored, occupant_agent=None):
 		#center of the room_cell: 2d np array
-		self.center = None
-		raise NotImplementedError
+		self._center = center   				# Point object specifying the coordinate of cell
+		self._cell_location = cell_location 	# relative location within a room: upperleft, upperright etc.
+		self._cell_state = cell_state  			# Unexplored / ExploredNoAgent / ... etc
+		if occupant_agent is not None:
+			self.add_agent(occupant_agent)
+		else
+			self._occupant_agent = None
 
 	def has_agent(self):
-		#return if cell has agent occupied
-		raise NotImplementedError
+		return self._occupant_agent is not None
+
+	def get_location(self):
+		return self._cell_location
+
+	def get_cell_state(self):
+		return self._cell_state
+
+	def get_cell_center(self):
+		return self._center
+
+	def update_cell_state_once_observed(self):
+		#this method is called if and only if this cell has been observed by blue
+		if self.has_agent():
+			self._cell_state = CellState.ExploredHasAgent
+		self._cell_state = CellState.ExploredNoAgent
+
+	def add_agent(self, agent: DummyAgent):
+		assert not self.has_agent()
+		self._occupant_agent = agent
 
 class Point:
 	def __init__(self, xy):
 		self.x = xy[0]
 		self.y = xy[1]
 
+	def new_point(self, xy):
+		#generate a new point which is offset by xy
+		return Point([self.x + xy[0], self.y + xy[1]]) 
+
 class Room_window(object):
-	def __init__(self):
+	def __init__(self, p1, p2):
 		#list of two np arrays contain the two end_points of the window
-		self.end_points = None
+		self.p1 = p1
+		self.p2 = p2
 		raise NotImplementedError
 
 	# https: // www.geeksforgeeks.org / check - if -two - given - line - segments - intersect /
 	def onSegment(self, p, q, r):
+		#TODO: does this method use the points defining windows?
+		#TODO: if this method is also needed by other classes, then do not define as
+		#a class method  
 		if ((q.x <= max(p.x, r.x)) and (q.x >= min(p.x, r.x)) and
 				(q.y <= max(p.y, r.y)) and (q.y >= min(p.y, r.y))):
 			return True
 		return False
 
 	def orientation(self, p, q, r):
+		#TODO: does this method use the points defining windows?
+
 		# to find the orientation of an ordered triplet (p,q,r)
 		# function returns the following values:
 		# 0 : Colinear points
@@ -80,6 +128,7 @@ class Room_window(object):
 	# The main function that returns true if
 	# the line segment 'p1q1' and 'p2q2' intersect.
 	def doIntersect(self, _p1, _q1, _p2, _q2):
+		#TODO: does this method use the points defining windows?
 		p1 = Point(_p1)
 		q1 = Point(_q1)
 		p2 = Point(_p2)
@@ -116,13 +165,46 @@ class Room_window(object):
 	# 	raise NotImplementedError
 
 class Room(object):
-	def __init__(self):
-		self.cells = []
-		raise NotImplementedError
+	def __init__(self, center: Point, x_scale, y_scale):
+		self.center = center
+		cell_centers = [self.center.new_point([ - x_scale / 4,   y_scale / 4]),
+						self.center.new_point([   x_scale / 4,   y_scale / 4]),
+						self.center.new_point([ - x_scale / 4, - y_scale / 4]),
+						self.center.new_point([   x_scale / 4, - y_scale / 4])]
+		cell_locations = [CellLocation.UpperLeft,
+						  CellLocation.UpperRight,
+						  CellLocation.BottomLeft.
+						  CellLocation.BottomRight]
+		self.cells = [Room_cell(c_center, c_location) for c_center, c_location in zip(cell_centers, cell_locations)]
+
 	def has_agent(self) -> bool:
-		raise NotImplementedError
-	def agent_location(self):
+		return any([cell.has_agent() for cell in self.cells])
+
+	def agent_location(self) -> CellLocation:
 		#return the cell location, which occupied by an agent
+		if not self.has_agent():
+			raise Exception("no agent in the room")
+		cell_has_agent = filter(lambda x: x.has_agent(), self.cells)
+		assert len(cell_has_agent) == 1, "room contains a most one agent, check correctness"
+		return cell_has_agent[0].get_location()
+
+	def add_agent(self, agent: DummyAgent):
+		assert not self.has_agent(), "room already contains one agent"
+		rand_cell_ind = np.random.choice(list(range(4)))[0]
+		self.cells[rand_cell_ind].add_agent(agent)
+
+class FieldOfView(object):
+	#blue agent filed of view
+	def __init__(self, attached_agent: BlueAgent, half_view_angle=np.pi/3, sensing_range=0.2):
+		self._half_view_angle = half_view_angle
+		self._sensing_range = sensing_range
+		self._attached_agent = agent
+	def check_within_fov(self, p -> Point) -> bool: #check if a point p is within fov
+		raise NotImplementedError
+
+class TeamBelief(object):
+	#blue team belief, use singleton decorator such that there is only one instance of TeamBlief
+	def __init__(self):
 		raise NotImplementedError
 
 
@@ -130,6 +212,10 @@ class BlueAgent(Agent):
 	def __init__(self):
 		super(BlueAgent, self).__init__()
 		self.color = np.array([0.0, 0.0, 1.0])
+		self.FOV = FieldOfView(self)   #agent filed of view 
+
+	def check_within_fov(self, p -> Point) -> bool:
+		return self.FOV.check_within_fov(p)
 
 class Scenario(BaseScenario):
 	def make_world(self):
@@ -173,6 +259,7 @@ class Scenario(BaseScenario):
 	def reward(self, agent, world):
 		rew_belief = 0
 		reward_penality = 0
+		raise NotImplementedError
 		return rew_belief + reward_penality
 
 	def observation(self, agent, world):
