@@ -1,9 +1,22 @@
 import numpy as np
-from multiagent.core import World, Agent, Landmark, Wall
+from multiagent.core import World, Agent, Landmark, Wall, Entity
 from multiagent.scenario import BaseScenario
-from enum import Enum
+from enum import Enum, unique
 
-class DummyAgent(Landmark):
+@unique
+class AudioAction(Enum):
+	HandsUp = 1
+	Freeze = 2
+
+@unique
+class AudioResponse(Enum):
+	AgentHandsUp = 1
+	AgentFreeze = 2
+
+RedResponseProbMatrix = [[0.2, 0.8], [0.3, 0.7]]
+GreyResponseProbMatrix = [[0.7, 0.3], [0.8, 0.2]]
+
+class DummyAgent(Entity):
 	#super class of red and grey agent that use pre-defined policies
 	def __init__(self):
 		super(DummyAgent, self).__init__()
@@ -11,23 +24,28 @@ class DummyAgent(Landmark):
 		self.movable = False
 		self.size = 0.05
 		self.is_red = None
+		self.response_probability_matrix = None
 
-	def response_to_audio(self, audio):
+	def sample_response_to_audio(self, audio: AudioAction):
 		#this method takes in an audio action by the blue agent
 		#output a probablistic response according to the agent type
-		raise NotImplementedError
+		response_probability = self.response_probability_matrix[AudioAction.value - 1] #enum member value start from 1
+		sampled_response_index = np.random.choice(len(response_probability), 1, p=response_probability)[0]
+		return AudioResponse(sampled_response_index + 1)
 
 class RedAgent(DummyAgent):
 	def __init__(self):
 		super(RedAgent, self).__init__()
 		self.color = np.array([1.0, 0.0, 0.0])
 		self.is_red = True
+		self.response_probability_matrix = RedResponseProbMatrix
 
 class GreyAgent(DummyAgent):
 	def __init__(self):
 		super(GreyAgent, self).__init__()
 		self.color = np.array([0.2, 0.2, 0.2])
 		self.is_red = False
+		self.response_probability_matrix = GreyResponseProbMatrix
 
 @unique
 class CellLocation(Enum):
@@ -43,16 +61,18 @@ class CellState(Enum):
 	ExploredNoAgent = 2
 	ExploredHasAgent = 3
 
+
 class Room_cell(object):
-	def __init__(self, center, cell_location, cell_state=CellState.Unexplored, occupant_agent=None):
+	def __init__(self, center, cell_location, cell_state=CellState.Unexplored, occupant_agent=None, belief=0.5):
 		#center of the room_cell: 2d np array
 		self._center = center   				# Point object specifying the coordinate of cell
 		self._cell_location = cell_location 	# relative location within a room: upperleft, upperright etc.
 		self._cell_state = cell_state  			# Unexplored / ExploredNoAgent / ... etc
 		if occupant_agent is not None:
 			self.add_agent(occupant_agent)
-		else
+		else:
 			self._occupant_agent = None
+		self._belief = belief   				#belief of occupant_agent being red
 
 	def has_agent(self):
 		return self._occupant_agent is not None
@@ -66,11 +86,28 @@ class Room_cell(object):
 	def get_cell_center(self):
 		return self._center
 
+	def get_belief(self):
+		return self._belief
+
 	def update_cell_state_once_observed(self):
 		#this method is called if and only if this cell has been observed by blue
 		if self.has_agent():
 			self._cell_state = CellState.ExploredHasAgent
 		self._cell_state = CellState.ExploredNoAgent
+
+	def update_cell_belief_upon_audio(self, audio: AudioAction):
+		if not self.has_agent():
+			return
+		sampled_response = self._occupant_agent.sample_response_to_audio(audio)
+		belief_vector = np.array([self._belief, 1 - self._belief])
+		audio_index = audio.value - 1
+		response_index = sampled_response.value - 1
+		likelihood_vector = np.array([RedResponseProbMatrix[audio_index][response_index],
+									  GreyResponseProbMatrix[audio_index][response_index]])
+		belief_vector = belief_vector * likelihood_vector
+		belief_vector = belief_vector / np.sum(belief_vector)
+		self._belief = belief_vector[0]
+		return
 
 	def add_agent(self, agent: DummyAgent):
 		assert not self.has_agent()
@@ -193,19 +230,23 @@ class Room(object):
 		rand_cell_ind = np.random.choice(list(range(4)))[0]
 		self.cells[rand_cell_ind].add_agent(agent)
 
+	def get_cell_states(self):
+		return [cell.get_cell_state() for cell in self.cells]
+
+	def get_cell_centers(self):
+		return [cell.get_cell_center() for cell in self.cells]
+
+	def get_cell_beliefs(self):
+		return [cell.get_cell_belief() for cell in self.cells]
+
+
 class FieldOfView(object):
 	#blue agent filed of view
-	def __init__(self, attached_agent: BlueAgent, half_view_angle=np.pi/3, sensing_range=0.2):
+	def __init__(self, attached_agent, half_view_angle=np.pi/3, sensing_range=0.2):
 		self._half_view_angle = half_view_angle
 		self._sensing_range = sensing_range
-		self._attached_agent = agent
-	def check_within_fov(self, p -> Point) -> bool: #check if a point p is within fov
-		raise NotImplementedError
-
-class TeamBelief(object):
-	#blue team belief, use singleton decorator such that there is only one instance of TeamBlief
-	def __init__(self):
-		#TODO: macheng implements
+		self._attached_agent = attached_agent
+	def check_within_fov(self, p: Point) -> bool: #check if a point p is within fov
 		raise NotImplementedError
 
 
@@ -213,9 +254,9 @@ class BlueAgent(Agent):
 	def __init__(self):
 		super(BlueAgent, self).__init__()
 		self.color = np.array([0.0, 0.0, 1.0])
-		self.FOV = FieldOfView(self)   #agent filed of view 
+		self.FOV = FieldOfView(self)   #agent filed of view
 
-	def check_within_fov(self, p -> Point) -> bool:
+	def check_within_fov(self, p: Point) -> bool:
 		return self.FOV.check_within_fov(p)
 
 class Scenario(BaseScenario):
