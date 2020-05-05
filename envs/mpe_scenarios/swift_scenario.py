@@ -51,7 +51,7 @@ class Room_cell(object):
 		self._cell_state = cell_state  			# Unexplored / ExploredNoAgent / ... etc
 		if occupant_agent is not None:
 			self.add_agent(occupant_agent)
-		else
+		else:
 			self._occupant_agent = None
 
 	def has_agent(self):
@@ -83,27 +83,26 @@ class Point:
 
 	def new_point(self, xy):
 		#generate a new point which is offset by xy
-		return Point([self.x + xy[0], self.y + xy[1]]) 
+		return Point([self.x + xy[0], self.y + xy[1]])
 
-class Room_window(object):
-	def __init__(self, p1, p2):
-		#list of two np arrays contain the two end_points of the window
-		self.p1 = p1
-		self.p2 = p2
-		raise NotImplementedError
+# class checkIntersection:
+# 	def __init__(self):
 
-	# https: // www.geeksforgeeks.org / check - if -two - given - line - segments - intersect /
+# https: // www.geeksforgeeks.org / check - if -two - given - line - segments - intersect /
+class checkIntersection:
+	def __init__(self):
+		self.check = True
 	def onSegment(self, p, q, r):
-		#TODO: does this method use the points defining windows?
-		#TODO: if this method is also needed by other classes, then do not define as
-		#a class method  
+		# TODO: does this method use the points defining windows?
+		# TODO: if this method is also needed by other classes, then do not define as
+		# a class method
 		if ((q.x <= max(p.x, r.x)) and (q.x >= min(p.x, r.x)) and
 				(q.y <= max(p.y, r.y)) and (q.y >= min(p.y, r.y))):
 			return True
 		return False
 
 	def orientation(self, p, q, r):
-		#TODO: does this method use the points defining windows?
+		# TODO: does this method use the points defining windows?
 
 		# to find the orientation of an ordered triplet (p,q,r)
 		# function returns the following values:
@@ -128,7 +127,7 @@ class Room_window(object):
 	# The main function that returns true if
 	# the line segment 'p1q1' and 'p2q2' intersect.
 	def doIntersect(self, _p1, _q1, _p2, _q2):
-		#TODO: does this method use the points defining windows?
+		# TODO: does this method use the points defining windows?
 		p1 = Point(_p1)
 		q1 = Point(_q1)
 		p2 = Point(_p2)
@@ -163,6 +162,16 @@ class Room_window(object):
 	# def intersect(self, line: list) -> bool:
 	# 	#return if intersect with a list of two np arrays specifying a line
 	# 	raise NotImplementedError
+
+
+class Room_window(object):
+	def __init__(self, p1, p2):
+		#list of two np arrays contain the two end_points of the window
+		self.p1 = p1
+		self.p2 = p2
+		raise NotImplementedError
+
+
 
 class Room(object):
 	def __init__(self, center: Point, x_scale, y_scale):
