@@ -264,7 +264,7 @@ class Scenario(BaseScenario):
 		raise NotImplementedError
 
 	def _set_walls(self):
-
+		Wall(orient='H', axis_pos=0.0, endpoints=(-1, 1), width = 0.1, hard = True)
 		raise NotImplementedError
 
 	def _set_rooms(self):
