@@ -16,6 +16,11 @@ class AudioResponse(Enum):
 RedResponseProbMatrix = [[0.2, 0.8], [0.3, 0.7]]
 GreyResponseProbMatrix = [[0.7, 0.3], [0.8, 0.2]]
 
+class SwiftWorld(World):
+	def __init__(self):
+		super(SwiftWorld, self).__init__()
+		self.old_belief = None 					#old_belief records the belief of last step, used to calculate belief update reward
+
 class DummyAgent(Entity):
 	#super class of red and grey agent that use pre-defined policies
 	def __init__(self):
@@ -73,6 +78,7 @@ class Room_cell(object):
 		else:
 			self._occupant_agent = None
 		self._belief = belief   				#belief of occupant_agent being red
+		self._belief_update_reward = 0
 
 	def has_agent(self):
 		return self._occupant_agent is not None
@@ -261,51 +267,52 @@ class BlueAgent(Agent):
 
 class Scenario(BaseScenario):
 	def make_world(self):
-		self.num_blue = 3
-		self.num_red = 1
-		self.num_grey = 3
-		self.num_room = 5
-		self.num_wall = 10
+		num_blue = 3
+		num_red = 1
+		num_grey = 3
+		num_room = 5
+		num_wall = 10
 
-		assert self.num_room >= self.num_grey + self.num_red, "must ensure each room only has less than 1 agent"
+		assert num_room >= num_grey + num_red, "must ensure each room only has less than 1 agent"
 
-		world = World()
+		world = SwiftWorld()
 		#self.agents contains only policy agents (blue agents)
-		self.agents = [BlueAgent() for i in range(self.num_blue)]
-		world.agents = [BlueAgent() for i in range(self.num_blue)]
+		world.agents = [BlueAgent() for i in range(num_blue)]
 
-		world.dummy_agents = [RedAgent() for i in range(self.num_red)]
-		world.dummy_agents += [GreyAgent() for i in range(self.num_grey)]
-		self.dummy_agents = self.num_red + self.num_grey
+		world.dummy_agents = [RedAgent() for i in range(num_red)]
+		world.dummy_agents += [GreyAgent() for i in range(num_grey)]
+
 		
-		self.walls = None
-		self.rooms = None
+		world.walls = None
+		world.rooms = None
 
 		#TODO: chuangchuang implements wall and room generation
-		self._set_walls()
-		self._set_rooms()
+		self._set_walls(world)
+		self._set_rooms(world)
 		
 		raise NotImplementedError
 	
-	def _reset_dummy_agents_location(self):
+	def _reset_dummy_agents_location(self, world):
+		#TODO: chuangchuang implements
+		#use 'add_agent' method of the room object
+		raise NotImplementedError
+
+	def _permute_dummy_agents_index(self, world):
 		#TODO: chuangchuang implements
 		raise NotImplementedError
 
-	def _permute_dummy_agents_index(self):
-		#TODO: chuangchuang implements
+	def _set_walls(self, world):
+		# TODO: chuangchuang implements
 		raise NotImplementedError
 
-	def _set_walls(self):
-
-		raise NotImplementedError
-
-	def _set_rooms(self):
+	def _set_rooms(self, world):
+		# TODO: chuangchuang implements
 		raise NotImplementedError
 
 	def reset_world(self, world):
-		self._reset_dummy_agents_location()
-		self._permute_dummy_agents_index()
-		self._initilize_team_belief()
+		world._reset_dummy_agents_location()
+		world._permute_dummy_agents_index()
+		world._initilize_room_belief()
 		raise NotImplementedError
 
 	def benchmark_data(self, agent, world):
