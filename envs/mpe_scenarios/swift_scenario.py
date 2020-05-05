@@ -214,6 +214,7 @@ class FieldOfView(object):
 class TeamBelief(object):
 	#blue team belief, use singleton decorator such that there is only one instance of TeamBlief
 	def __init__(self):
+		#TODO: macheng implements
 		raise NotImplementedError
 
 
@@ -234,31 +235,45 @@ class Scenario(BaseScenario):
 		self.num_room = 5
 		self.num_wall = 10
 
+		assert self.num_room >= self.num_grey + self.num_red, "must ensure each room only has less than 1 agent"
+
 		world = World()
 		#self.agents contains only policy agents (blue agents)
 		self.agents = [BlueAgent() for i in range(self.num_blue)]
 		world.agents = [BlueAgent() for i in range(self.num_blue)]
 
-		world.landmarks = [RedAgent() for i in range(self.num_red)]
-		world.landmarks.append([GreyAgent() for i in range(self.num_grey)])
+		world.dummy_agents = [RedAgent() for i in range(self.num_red)]
+		world.dummy_agents += [GreyAgent() for i in range(self.num_grey)]
 		self.dummy_agents = self.num_red + self.num_grey
-		self.walls = [Wall() for i in range(self.num_wall)]
-		self.rooms = [Room() for i in range(self.num_room)]
+		
+		self.walls = None
+		self.rooms = None
+
+		#TODO: chuangchuang implements wall and room generation
+		self._set_walls()
+		self._set_rooms()
 		
 		raise NotImplementedError
 	
 	def _reset_dummy_agents_location(self):
+		#TODO: chuangchuang implements
 		raise NotImplementedError
 
 	def _permute_dummy_agents_index(self):
+		#TODO: chuangchuang implements
 		raise NotImplementedError
 
 	def _set_walls(self):
+
+		raise NotImplementedError
+
+	def _set_rooms(self):
 		raise NotImplementedError
 
 	def reset_world(self, world):
 		self._reset_dummy_agents_location()
 		self._permute_dummy_agents_index()
+		self._initilize_team_belief()
 		raise NotImplementedError
 
 	def benchmark_data(self, agent, world):
@@ -278,4 +293,5 @@ class Scenario(BaseScenario):
 			if other is agent: continue
 			other_pos.append(other.state.p_pos - agent.state.p_pos)
 			other_vel.append(other.state.p_vel)
+		raise NotImplementedError
 		return np.concatenate([agent.state.p_vel] + [agent.state.p_pos] + other_pos + other_vel)
