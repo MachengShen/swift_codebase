@@ -20,6 +20,7 @@ class SwiftWorld(World):
 	def __init__(self):
 		super(SwiftWorld, self).__init__()
 		self.old_belief = None 					#old_belief records the belief of last step, used to calculate belief update reward
+		#TODO:
 
 class DummyAgent(Entity):
 	#super class of red and grey agent that use pre-defined policies
@@ -119,6 +120,7 @@ class Room_cell(object):
 	def add_agent(self, agent: DummyAgent):
 		assert not self.has_agent()
 		self._occupant_agent = agent
+		#TODO: update agent_state
 
 	def reset_cell_state(self):
 		#remove occupant agent and set cell state to unexplored
@@ -137,10 +139,13 @@ class Point:
 # 	def __init__(self):
 
 # https: // www.geeksforgeeks.org / check - if -two - given - line - segments - intersect /
-class checkIntersection:
+
+#TODO: move this to a separate module
+class IntersectionChecker:
 	def __init__(self):
-		self.check = True
-	def onSegment(self, p, q, r):
+		pass
+
+	def _onSegment(self, p, q, r):
 		# TODO: does this method use the points defining windows?
 		# TODO: if this method is also needed by other classes, then do not define as
 		# a class method
@@ -149,7 +154,7 @@ class checkIntersection:
 			return True
 		return False
 
-	def orientation(self, p, q, r):
+	def _orientation(self, p, q, r):
 		# TODO: does this method use the points defining windows?
 
 		# to find the orientation of an ordered triplet (p,q,r)
@@ -182,10 +187,10 @@ class checkIntersection:
 		q2 = Point(_q2)
 		# Find the 4 orientations required for
 		# the general and special cases
-		o1 = self.orientation(p1, q1, p2)
-		o2 = self.orientation(p1, q1, q2)
-		o3 = self.orientation(p2, q2, p1)
-		o4 = self.orientation(p2, q2, q1)
+		o1 = self._orientation(p1, q1, p2)
+		o2 = self._orientation(p1, q1, q2)
+		o3 = self._orientation(p2, q2, p1)
+		o4 = self._orientation(p2, q2, q1)
 
 		# General case
 		if ((o1 != o2) and (o3 != o4)):
@@ -193,16 +198,16 @@ class checkIntersection:
 
 		# Special Cases
 		# p1 , q1 and p2 are colinear and p2 lies on segment p1q1
-		if ((o1 == 0) and self.onSegment(p1, p2, q1)):
+		if ((o1 == 0) and self._onSegment(p1, p2, q1)):
 			return True
 		# p1 , q1 and q2 are colinear and q2 lies on segment p1q1
-		if ((o2 == 0) and self.onSegment(p1, q2, q1)):
+		if ((o2 == 0) and self._onSegment(p1, q2, q1)):
 			return True
 		# p2 , q2 and p1 are colinear and p1 lies on segment p2q2
-		if ((o3 == 0) and self.onSegment(p2, p1, q2)):
+		if ((o3 == 0) and self._onSegment(p2, p1, q2)):
 			return True
 		# p2 , q2 and q1 are colinear and q1 lies on segment p2q2
-		if ((o4 == 0) and self.onSegment(p2, q1, q2)):
+		if ((o4 == 0) and self._onSegment(p2, q1, q2)):
 			return True
 		# If none of the cases
 		return False
@@ -233,6 +238,8 @@ class Room(object):
 						  CellLocation.BottomLeft.
 						  CellLocation.BottomRight]
 		self.cells = [Room_cell(c_center, c_location) for c_center, c_location in zip(cell_centers, cell_locations)]
+		#TODO: chuangchuang add room_window
+		self.window = None
 
 	def has_agent(self) -> bool:
 		return any([cell.has_agent() for cell in self.cells])
@@ -285,13 +292,15 @@ class BlueAgent(Agent):
 	def check_within_fov(self, p):
 		return self.FOV.check_within_fov(p)
 
+	def check_
+
 class Scenario(BaseScenario):
 	def make_world(self):
 		num_blue = 3
 		num_red = 1
 		num_grey = 2
 		num_room = 4
-		num_wall = 3*num_room + 1
+		num_wall = 3 * num_room + 1
 
 		self.num_room = num_room
 		self.num_wall = num_wall
@@ -373,4 +382,7 @@ class Scenario(BaseScenario):
 			other_pos.append(other.state.p_pos - agent.state.p_pos)
 			other_vel.append(other.state.p_vel)
 		raise NotImplementedError
+		#TODO:
+		# blueagents' state,
+		# cell location, has_agent, belief, within_fov
 		return np.concatenate([agent.state.p_vel] + [agent.state.p_pos] + other_pos + other_vel)
