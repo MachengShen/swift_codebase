@@ -264,7 +264,7 @@ class FieldOfView(object):
 		self._attached_agent = attached_agent
 	def check_within_fov(self, p): #check if a point p is within fov
 		vector1 = np.subtract(p, self._attached_agent.state.p_pos)
-		vector2 = np.array([np.cos(self._attached_agent.boresight), np.sin(self._attached_agent.boresight)])
+		vector2 = np.array([np.cos(self._attached_agent.state.boresight), np.sin(self._attached_agent.state.boresight)])
 		return True if np.inner(vector1, vector2)/np.linalg.norm(vector1) >= np.cos(self._half_view_angle) else False
 		# raise NotImplementedError
 
