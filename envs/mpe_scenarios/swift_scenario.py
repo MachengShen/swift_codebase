@@ -44,6 +44,7 @@ class RedAgent(DummyAgent):
 		self.color = np.array([1.0, 0.0, 0.0])
 		self.is_red = True
 		self.response_probability_matrix = RedResponseProbMatrix
+		self.room_index = None
 
 class GreyAgent(DummyAgent):
 	def __init__(self):
@@ -51,7 +52,7 @@ class GreyAgent(DummyAgent):
 		self.color = np.array([0.2, 0.2, 0.2])
 		self.is_red = False
 		self.response_probability_matrix = GreyResponseProbMatrix
-
+		self.room_index = None
 @unique
 class CellLocation(Enum):
 	#Enumeration of celllocations within a room
@@ -261,8 +262,11 @@ class FieldOfView(object):
 		self._half_view_angle = half_view_angle
 		self._sensing_range = sensing_range
 		self._attached_agent = attached_agent
-	def check_within_fov(self, p: Point) -> bool: #check if a point p is within fov
-		raise NotImplementedError
+	def check_within_fov(self, p): #check if a point p is within fov
+		vector1 = np.subtract(p, self._attached_agent.state.p_pos)
+		vector2 = np.array([np.cos(self._attached_agent.boresight), np.sin(self._attached_agent.boresight)])
+		return True if np.inner(vector1, vector2)/np.linalg.norm(vector1) >= np.cos(self._half_view_angle) else False
+		# raise NotImplementedError
 
 
 class BlueAgent(Agent):
@@ -270,17 +274,30 @@ class BlueAgent(Agent):
 		super(BlueAgent, self).__init__()
 		self.color = np.array([0.0, 0.0, 1.0])
 		self.FOV = FieldOfView(self)   #agent filed of view
+		# self.state.boresight = np.pi/2
 
-	def check_within_fov(self, p: Point) -> bool:
+	def check_within_fov(self, p):
 		return self.FOV.check_within_fov(p)
 
 class Scenario(BaseScenario):
 	def make_world(self):
 		num_blue = 3
 		num_red = 1
-		num_grey = 3
-		num_room = 5
-		num_wall = 10
+		num_grey = 2
+		num_room = 4
+		num_wall = 3*num_room + 1
+		wall_orient = "H" * num_wall
+		wall_axis_pos = np.zeros((num_wall))
+		wall_endpoints = []
+
+		self.num_room = num_room
+		self.num_wall = num_wall
+		self.num_red = num_red
+		self.num_grey = num_grey
+
+		room_centers = np.zeros((num_room, 2))
+		for i in range(num_room):
+			room_centers[i,:] = np.array([-0.75+i*0.5, 0.75])
 
 		assert num_room >= num_grey + num_red, "must ensure each room only has less than 1 agent"
 
@@ -292,8 +309,8 @@ class Scenario(BaseScenario):
 		world.dummy_agents += [GreyAgent() for i in range(num_grey)]
 
 		
-		world.walls = None
-		world.rooms = None
+		world.walls = [Wall(orient=wall_orient[i], axis_pos=wall_axis_pos[i], endpoints=wall_endpoints[i]) for i in range(num_wall)]
+		world.rooms = [Room(Point(room_centers[i,:]), 0.5, 0.5) for i in range(num_room)]
 
 		#TODO: chuangchuang implements wall and room generation
 		self._set_walls(world)
@@ -304,19 +321,22 @@ class Scenario(BaseScenario):
 	def _reset_dummy_agents_location(self, world):
 		#TODO: chuangchuang implements
 		#use 'add_agent' method of the room object
-		raise NotImplementedError
+		for i in range(self.num_red + self.num_grey):
+			room_index = world.dummy_agents[i].room_index
+			world.rooms[room_index].add_agent(world.dummy_agents[i])
+		# raise NotImplementedError
 
 	def _permute_dummy_agents_index(self, world):
 		#TODO: chuangchuang implements
-		raise NotImplementedError
+		permuted_index = np.random.permutation(self.num_room)
+		for i in range(self.num_red + self.num_grey):
+			world.dummy_agents[i].room_index = permuted_index[i]
+		# return np.random.permutation(self.num_room)[:self.num_red + self.num_grey]
+		# raise NotImplementedError
 
-<<<<<<< HEAD
-	def _set_walls(self):
-		Wall(orient='H', axis_pos=0.0, endpoints=(-1, 1), width = 0.1, hard = True)
-=======
 	def _set_walls(self, world):
 		# TODO: chuangchuang implements
->>>>>>> 28713472667fe1238c7f601f736d31a0a54b0ebe
+
 		raise NotImplementedError
 
 	def _set_rooms(self, world):
@@ -324,8 +344,8 @@ class Scenario(BaseScenario):
 		raise NotImplementedError
 
 	def reset_world(self, world):
-		world._reset_dummy_agents_location()
 		world._permute_dummy_agents_index()
+		world._reset_dummy_agents_location()
 		world._initilize_room_belief()
 		raise NotImplementedError
 
