@@ -2,6 +2,7 @@ import numpy as np
 from multiagent.core import World, Agent, Landmark, Wall, Entity
 from multiagent.scenario import BaseScenario
 from enum import Enum, unique
+from utils import doIntersect
 
 @unique
 class AudioAction(Enum):
@@ -122,6 +123,7 @@ class Room_cell(object):
 		self._occupant_agent = agent
 		#TODO: update agent_state
 
+
 	def reset_cell_state(self):
 		#remove occupant agent and set cell state to unexplored
 
@@ -140,81 +142,7 @@ class Point:
 
 # https: // www.geeksforgeeks.org / check - if -two - given - line - segments - intersect /
 
-#TODO: move this to a separate module
-class IntersectionChecker:
-	def __init__(self):
-		pass
 
-	def _onSegment(self, p, q, r):
-		# TODO: does this method use the points defining windows?
-		# TODO: if this method is also needed by other classes, then do not define as
-		# a class method
-		if ((q.x <= max(p.x, r.x)) and (q.x >= min(p.x, r.x)) and
-				(q.y <= max(p.y, r.y)) and (q.y >= min(p.y, r.y))):
-			return True
-		return False
-
-	def _orientation(self, p, q, r):
-		# TODO: does this method use the points defining windows?
-
-		# to find the orientation of an ordered triplet (p,q,r)
-		# function returns the following values:
-		# 0 : Colinear points
-		# 1 : Clockwise points
-		# 2 : Counterclockwise
-
-		# See https://www.geeksforgeeks.org/orientation-3-ordered-points/amp/
-		# for details of below formula.
-
-		val = (float(q.y - p.y) * (r.x - q.x)) - (float(q.x - p.x) * (r.y - q.y))
-		if (val > 0):
-			# Clockwise orientation
-			return 1
-		elif (val < 0):
-			# Counterclockwise orientation
-			return 2
-		else:
-			# Colinear orientation
-			return 0
-
-	# The main function that returns true if
-	# the line segment 'p1q1' and 'p2q2' intersect.
-	def doIntersect(self, _p1, _q1, _p2, _q2):
-		# TODO: does this method use the points defining windows?
-		p1 = Point(_p1)
-		q1 = Point(_q1)
-		p2 = Point(_p2)
-		q2 = Point(_q2)
-		# Find the 4 orientations required for
-		# the general and special cases
-		o1 = self._orientation(p1, q1, p2)
-		o2 = self._orientation(p1, q1, q2)
-		o3 = self._orientation(p2, q2, p1)
-		o4 = self._orientation(p2, q2, q1)
-
-		# General case
-		if ((o1 != o2) and (o3 != o4)):
-			return True
-
-		# Special Cases
-		# p1 , q1 and p2 are colinear and p2 lies on segment p1q1
-		if ((o1 == 0) and self._onSegment(p1, p2, q1)):
-			return True
-		# p1 , q1 and q2 are colinear and q2 lies on segment p1q1
-		if ((o2 == 0) and self._onSegment(p1, q2, q1)):
-			return True
-		# p2 , q2 and p1 are colinear and p1 lies on segment p2q2
-		if ((o3 == 0) and self._onSegment(p2, p1, q2)):
-			return True
-		# p2 , q2 and q1 are colinear and q1 lies on segment p2q2
-		if ((o4 == 0) and self._onSegment(p2, q1, q2)):
-			return True
-		# If none of the cases
-		return False
-
-	# def intersect(self, line: list) -> bool:
-	# 	#return if intersect with a list of two np arrays specifying a line
-	# 	raise NotImplementedError
 
 
 class Room_window(object):
@@ -238,7 +166,6 @@ class Room(object):
 						  CellLocation.BottomLeft.
 						  CellLocation.BottomRight]
 		self.cells = [Room_cell(c_center, c_location) for c_center, c_location in zip(cell_centers, cell_locations)]
-		#TODO: chuangchuang add room_window
 		self.window = None
 
 	def has_agent(self) -> bool:
@@ -292,7 +219,7 @@ class BlueAgent(Agent):
 	def check_within_fov(self, p):
 		return self.FOV.check_within_fov(p)
 
-	def check_
+	# def check_
 
 class Scenario(BaseScenario):
 	def make_world(self):
@@ -300,14 +227,12 @@ class Scenario(BaseScenario):
 		num_red = 1
 		num_grey = 2
 		num_room = 4
-		num_wall = 3 * num_room + 1
+		arena_size = 2
 
 		self.num_room = num_room
-		self.num_wall = num_wall
+		# self.num_wall = num_wall
 		self.num_red = num_red
 		self.num_grey = num_grey
-
-
 
 		assert num_room >= num_grey + num_red, "must ensure each room only has less than 1 agent"
 
@@ -318,17 +243,15 @@ class Scenario(BaseScenario):
 		world.dummy_agents = [RedAgent() for i in range(num_red)]
 		world.dummy_agents += [GreyAgent() for i in range(num_grey)]
 
-
-		#TODO: chuangchuang implements wall and room generation
-		self._set_walls(world, num_wall)
-		self._set_rooms(world, num_room)
+		self._set_rooms(world, num_room, arena_size)
+		self._set_walls(world, num_room, arena_size)
+		self._set_room_windows(world, num_room, arena_size=2)
 
 		self.reset_world(world)  #reset_world also reset agents
 
 		raise NotImplementedError
 	
 	def _reset_dummy_agents_location(self, world):
-		#TODO: chuangchuang implements
 		#use 'add_agent' method of the room object
 		for i in range(self.num_red + self.num_grey):
 			room_index = world.dummy_agents[i].room_index
@@ -336,27 +259,46 @@ class Scenario(BaseScenario):
 		# raise NotImplementedError
 
 	def _permute_dummy_agents_index(self, world):
-		#TODO: chuangchuang implements
 		permuted_index = np.random.permutation(self.num_room)
 		for i in range(self.num_red + self.num_grey):
 			world.dummy_agents[i].room_index = permuted_index[i]
 		# return np.random.permutation(self.num_room)[:self.num_red + self.num_grey]
 		# raise NotImplementedError
 
-	def _set_walls(self, world, num_wall):
-		# TODO: chuangchuang implements
+	def _set_walls(self, world, num_room, arena_size=2):
+		num_wall = 3 * num_room + 1
+		length = arena_size / num_room
+		window_length = length / 2
 		wall_orient = "H" * num_wall
 		wall_axis_pos = np.zeros((num_wall))
-		# TODO: fill out wall_endpoints
 		wall_endpoints = []
-		world.walls = [Wall(orient=wall_orient[i], axis_pos=wall_axis_pos[i], endpoints=wall_endpoints[i]) for i in range(num_wall)]
-		raise NotImplementedError
+		for i in range(num_room):
+			wall_orient[3*i:3*i+3] = 'HVH'
+			wall_axis_pos[3*i:3*i+3] = np.array([arena_size/2, -arena_size/2 + length*i, arena_size/2-length])
+			wall_endpoints.append((-arena_size/2 + length*i, -arena_size/2 + length*(i+1)))
+			wall_endpoints.append((arena_size/2, arena_size/2-length))
+			wall_endpoints.append((-arena_size/2 + length*i, -arena_size/2 + length*(i+1) - window_length))
+		wall_orient[num_room-1] = 'V'
+		wall_axis_pos[num_room-1] = arena_size/2
+		wall_endpoints.append((arena_size/2, arena_size/2-length))
 
-	def _set_rooms(self, world, num_room):
-		# TODO: chuangchuang implements
-		room_centers = np.array([[-0.75 + i * 0.5, 0.75] for i in num_room])
-		world.rooms = [Room(Point(room_centers[i, :]), 0.5, 0.5) for i in range(num_room)]
-		raise NotImplementedError
+		world.walls = [Wall(orient=wall_orient[i], axis_pos=wall_axis_pos[i], endpoints=wall_endpoints[i]) for i in range(num_wall)]
+		# raise NotImplementedError
+
+	def _set_rooms(self, world, num_room, arena_size=2):
+		length = arena_size / num_room
+		room_centers = np.array([[-arena_size/2 + length/2 + i * length, arena_size/2 - length/2] for i in num_room])
+		world.rooms = [Room(Point(room_centers[i, :]), length, length) for i in range(num_room)]
+		# raise NotImplementedError
+
+	def _set_room_windows(self, world, num_room, arena_size=2):
+		length = arena_size / num_room
+		window_length = length / 2
+		for i, room in enumerate(world.rooms):
+			room.window = Room_window(p1=np.array([-arena_size/2 + length*i + window_length, arena_size/2-length]),
+										  p2=np.array([-arena_size/2 + length*(i+1), arena_size/2-length]))
+
+
 
 	def reset_world(self, world):
 		world._permute_dummy_agents_index()
@@ -375,14 +317,25 @@ class Scenario(BaseScenario):
 		return rew_belief + reward_penality
 
 	def observation(self, agent, world):
+		# info from the other agents
 		other_pos = []
 		other_vel = []
+		other_heading = []
 		for other in world.agents:
 			if other is agent: continue
 			other_pos.append(other.state.p_pos - agent.state.p_pos)
 			other_vel.append(other.state.p_vel)
-		raise NotImplementedError
+			other_heading.append(other.state.boresight)
+		# raise NotImplementedError
 		#TODO:
 		# blueagents' state,
 		# cell location, has_agent, belief, within_fov
-		return np.concatenate([agent.state.p_vel] + [agent.state.p_pos] + other_pos + other_vel)
+		cell_info = []
+		for room in world.rooms:
+			for cell in room.cells:
+				cell_pos = np.array([cell._center.x, cell._center.y])
+				flag_1 = agent.check_within_fov(cell_pos)
+				flag_2 = doIntersect(agent.state.p_pos, cell_pos, room.window.p1, room.window.p2)
+				cell_info.extend([cell_pos, flag_1, flag_2, cell._cell_location, cell.occupant_agent, cell._belief])
+
+		return np.concatenate([agent.state.p_vel] + [agent.state.p_pos] + [agent.state.boresight] + other_pos + other_vel + other_heading + cell_info)
