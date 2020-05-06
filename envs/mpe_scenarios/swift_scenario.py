@@ -271,7 +271,6 @@ class FieldOfView(object):
 		#input p 2x1 numpy array
 		vector1 = np.subtract(p, self._attached_agent.state.p_pos)
 		#TODO: boresight definition?
-
 		vector2 = np.array([np.cos(self._attached_agent.state.boresight), np.sin(self._attached_agent.state.boresight)])
 		return True if np.inner(vector1, vector2)/np.linalg.norm(vector1) >= np.cos(self._half_view_angle) else False
 		# raise NotImplementedError
