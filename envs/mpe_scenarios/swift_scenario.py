@@ -120,6 +120,10 @@ class Room_cell(object):
 		assert not self.has_agent()
 		self._occupant_agent = agent
 
+	def reset_cell_state(self):
+		#remove occupant agent and set cell state to unexplored
+
+
 class Point:
 	def __init__(self, xy):
 		self.x = xy[0]
@@ -262,8 +266,12 @@ class FieldOfView(object):
 		self._half_view_angle = half_view_angle
 		self._sensing_range = sensing_range
 		self._attached_agent = attached_agent
+
 	def check_within_fov(self, p): #check if a point p is within fov
+		#input p 2x1 numpy array
 		vector1 = np.subtract(p, self._attached_agent.state.p_pos)
+		#TODO: boresight definition?
+
 		vector2 = np.array([np.cos(self._attached_agent.state.boresight), np.sin(self._attached_agent.state.boresight)])
 		return True if np.inner(vector1, vector2)/np.linalg.norm(vector1) >= np.cos(self._half_view_angle) else False
 		# raise NotImplementedError
@@ -274,7 +282,6 @@ class BlueAgent(Agent):
 		super(BlueAgent, self).__init__()
 		self.color = np.array([0.0, 0.0, 1.0])
 		self.FOV = FieldOfView(self)   #agent filed of view
-		# self.state.boresight = np.pi/2
 
 	def check_within_fov(self, p):
 		return self.FOV.check_within_fov(p)
@@ -286,18 +293,13 @@ class Scenario(BaseScenario):
 		num_grey = 2
 		num_room = 4
 		num_wall = 3*num_room + 1
-		wall_orient = "H" * num_wall
-		wall_axis_pos = np.zeros((num_wall))
-		wall_endpoints = []
 
 		self.num_room = num_room
 		self.num_wall = num_wall
 		self.num_red = num_red
 		self.num_grey = num_grey
 
-		room_centers = np.zeros((num_room, 2))
-		for i in range(num_room):
-			room_centers[i,:] = np.array([-0.75+i*0.5, 0.75])
+
 
 		assert num_room >= num_grey + num_red, "must ensure each room only has less than 1 agent"
 
@@ -308,14 +310,13 @@ class Scenario(BaseScenario):
 		world.dummy_agents = [RedAgent() for i in range(num_red)]
 		world.dummy_agents += [GreyAgent() for i in range(num_grey)]
 
-		
-		world.walls = [Wall(orient=wall_orient[i], axis_pos=wall_axis_pos[i], endpoints=wall_endpoints[i]) for i in range(num_wall)]
-		world.rooms = [Room(Point(room_centers[i,:]), 0.5, 0.5) for i in range(num_room)]
 
 		#TODO: chuangchuang implements wall and room generation
-		self._set_walls(world)
-		self._set_rooms(world)
-		
+		self._set_walls(world, num_wall)
+		self._set_rooms(world, num_room)
+
+		self.reset_world(world)  #reset_world also reset agents
+
 		raise NotImplementedError
 	
 	def _reset_dummy_agents_location(self, world):
@@ -334,13 +335,19 @@ class Scenario(BaseScenario):
 		# return np.random.permutation(self.num_room)[:self.num_red + self.num_grey]
 		# raise NotImplementedError
 
-	def _set_walls(self, world):
+	def _set_walls(self, world, num_wall):
 		# TODO: chuangchuang implements
-
+		wall_orient = "H" * num_wall
+		wall_axis_pos = np.zeros((num_wall))
+		# TODO: fill out wall_endpoints
+		wall_endpoints = []
+		world.walls = [Wall(orient=wall_orient[i], axis_pos=wall_axis_pos[i], endpoints=wall_endpoints[i]) for i in range(num_wall)]
 		raise NotImplementedError
 
-	def _set_rooms(self, world):
+	def _set_rooms(self, world, num_room):
 		# TODO: chuangchuang implements
+		room_centers = np.array([[-0.75 + i * 0.5, 0.75] for i in num_room])
+		world.rooms = [Room(Point(room_centers[i, :]), 0.5, 0.5) for i in range(num_room)]
 		raise NotImplementedError
 
 	def reset_world(self, world):
