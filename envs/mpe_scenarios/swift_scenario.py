@@ -284,8 +284,13 @@ class FieldOfView(object):
 class BlueAgent(Agent):
 	def __init__(self):
 		super(BlueAgent, self).__init__()
-		self.color = np.array([0.0, 0.0, 1.0])
+		# self.color = np.array([0.0, 0.0, 1.0])
 		self.FOV = FieldOfView(self)   #agent filed of view
+		self.silent = True
+		self.collide = True
+		self.silent = True
+		self.size = 0.15
+		self.color = np.array([0.35, 0.35, 0.85])
 
 	def check_within_fov(self, p):
 		return self.FOV.check_within_fov(p)
@@ -307,6 +312,9 @@ class Scenario(BaseScenario):
 		world = SwiftWorld()
 		#self.agents contains only policy agents (blue agents)
 		world.agents = [BlueAgent() for i in range(num_blue)]
+		for i, agent in enumerate(world.agents):
+			agent.name = 'agent %d' % i
+
 
 		world.dummy_agents = [RedAgent() for i in range(num_red)]
 		world.dummy_agents += [GreyAgent() for i in range(num_grey)]
@@ -319,17 +327,6 @@ class Scenario(BaseScenario):
 
 		raise NotImplementedError
 	
-	def _reset_dummy_agents_location(self, world):
-		for room in world.rooms:
-			room.reset_room_cell_states()
-
-		for i, agent in enumerate(world.dummy_agents):
-			world.rooms[agent.room_index].add_agent(agent)
-
-	def _permute_dummy_agents_index(self, world):
-		permuted_index = np.random.permutation(self.num_room)
-		for i in range(self.num_red + self.num_grey):
-			world.dummy_agents[i].room_index = permuted_index[i]
 
 	def _set_walls(self, world, num_room, arena_size):
 		num_wall = 3 * num_room + 1
@@ -366,10 +363,22 @@ class Scenario(BaseScenario):
 	def _reset_blue_states(self, world):
 		# raise NotImplementedError
 		for agent in world.agents:
+			agent.silent = True
 			agent.state.p_pos = np.random.uniform(-1, +1, world.dim_p)
 			agent.state.p_vel = np.zeros(world.dim_p)
 			agent.state.c = np.zeros(world.dim_c)
 
+	def _permute_dummy_agents_index(self, world):
+		permuted_index = np.random.permutation(self.num_room)
+		for i in range(self.num_red + self.num_grey):
+			world.dummy_agents[i].room_index = permuted_index[i]
+
+	def _reset_dummy_agents_location(self, world):
+		for room in world.rooms:
+			room.reset_room_cell_states()
+
+		for i, agent in enumerate(world.dummy_agents):
+			world.rooms[agent.room_index].add_agent(agent)
 
 	def reset_world(self, world):
 		self._reset_blue_states(world)
