@@ -2,7 +2,7 @@ import numpy as np
 from multiagent.core import World, Agent, Landmark, Wall, Entity
 from multiagent.scenario import BaseScenario
 from enum import Enum, unique
-from .utils import doIntersect
+from .utils import doIntersect, Point
 
 @unique
 class AudioAction(Enum):
@@ -202,14 +202,14 @@ class Room_cell(object):
 		self._belief = 0.5
 
 
-class Point:
-	def __init__(self, xy):
-		self.x = xy[0]
-		self.y = xy[1]
-
-	def new_point(self, xy):
-		#generate a new point which is offset by xy
-		return Point([self.x + xy[0], self.y + xy[1]])
+# class Point:
+# 	def __init__(self, xy):
+# 		self.x = xy[0]
+# 		self.y = xy[1]
+#
+# 	def new_point(self, xy):
+# 		#generate a new point which is offset by xy
+# 		return Point([self.x + xy[0], self.y + xy[1]])
 
 class Room_window(object):
 	def __init__(self, p1, p2):
@@ -358,8 +358,8 @@ class Scenario(BaseScenario):
 		length = arena_size / num_room
 		window_length = length / 2
 		for i, room in enumerate(world.rooms):
-			room.window = Room_window(p1=np.array([-arena_size/2 + length*i + window_length, arena_size/2-length]),
-										  p2=np.array([-arena_size/2 + length*(i+1), arena_size/2-length]))
+			room.window = Room_window(p1=Point(np.array([-arena_size/2 + length*i + window_length, arena_size/2-length])),
+										  p2=Point(np.array([-arena_size/2 + length*(i+1), arena_size/2-length])))
 
 	def _reset_blue_states(self, world):
 		# raise NotImplementedError
