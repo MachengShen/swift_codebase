@@ -33,6 +33,52 @@ class SwiftWorld(World):
 	#def increment_world_time(self):
 	#	self._time += 1
 
+	def step_belief(self):
+		#this step function is the additional to the physical state update
+		#should be called before calling reward
+		def audio_belief_reward(audio, belief):
+			#specify the audio action reward on dummy agent
+			if not audio: #audio action is None
+				return 0.0
+			BELIEF_THRES = 0.3   #belief above which assign no penalty
+			if belief > BELIEF_THRES:
+				return 0.0
+			if audio == AudioAction.Freeze:
+				return 0.1 * (belief - BELIEF_THRES)
+			assert audio == AudioAction.HandsUp, "error"
+			return 0.3 * (belief - BELIEF_THRES)
+
+		audio_rew = 0.0
+		#TODO: make sure each time step, this function has been called once and only once
+		#TODO: should modify environment._step()
+		self.record_old_belief()
+		self.record_old_cell_state_binary()  #record if cell has been explored or not
+		for agent in self.agents:
+			for room in self.rooms:
+				for cell in room.cells:
+					cell_center = cell.get_cell_center()
+					if agent.check_within_fov(cell_center) and doIntersect(cell_center, Point(agent.state.p_pos), room.window.p1, room.window.p2):
+						cell.update_cell_state_once_observed()
+						if cell.has_agent():
+							cell.update_cell_belief_upon_audio(agent.action.audio)
+							audio_rew += audio_belief_reward(agent.action.audio, cell.get_belief())
+
+						#TODO: make sure agent.action has audio attribute
+						#TODO: should also add audio action reward
+
+		current_cell_state_binary = np.array([room.get_cell_states_binary() for room in self.rooms]).flatten()
+		old_cell_state_binary = self.old_cell_state_binary
+		explore_cell_rew = 0.2 * np.sum(current_cell_state_binary - old_cell_state_binary)
+
+		current_belief = np.array([room.get_cell_beliefs() for room in self.rooms]).flatten()
+		old_belief = self.old_belief
+		delta_belief = np.abs(current_belief - old_belief)
+		belief_update_rew = 5.0 * np.sum(np.sqrt(delta_belief))
+
+		rew = explore_cell_rew + belief_update_rew + audio_rew
+
+		return rew
+
 class DummyAgent(Entity):
 	#super class of red and grey agent that use pre-defined policies
 	def __init__(self):
@@ -332,7 +378,7 @@ class Scenario(BaseScenario):
 		return self.reward(agent, world)
 
 	def reward(self, agent, world):
-		raise Exception("use self.step_belief(), should not call for every agent")
+		raise Exception("use world.step_belief(), should not call for every agent")
 
 	def observation(self, agent, world):
 		# info from the other agents
@@ -359,49 +405,4 @@ class Scenario(BaseScenario):
 
 		return np.concatenate([agent.state.p_vel] + [agent.state.p_pos] + [agent.state.boresight] + other_pos + other_vel + other_heading + cell_info)
 
-	def step_belief(self, world):
-		#this step function is the additional to the physical state update
-		#should be called before calling reward
-		def audio_belief_reward(audio, belief):
-			#specify the audio action reward on dummy agent
-			if not audio: #audio action is None
-				return 0.0
-			BELIEF_THRES = 0.3   #belief above which assign no penalty
-			if belief > BELIEF_THRES:
-				return 0.0
-			if audio == AudioAction.Freeze:
-				return 0.1 * (belief - BELIEF_THRES)
-			assert audio == AudioAction.HandsUp, "error"
-			return 0.3 * (belief - BELIEF_THRES)
-
-		audio_rew = 0.0
-		#TODO: make sure each time step, this function has been called once and only once
-		#TODO: should modify environment._step()
-		world.record_old_belief()
-		world.record_old_cell_state_binary()  #record if cell has been explored or not
-		for agent in world.agents:
-			for room in world.rooms:
-				for cell in room.cells:
-					cell_center = cell.get_cell_center()
-					if agent.check_within_fov(cell_center) and doIntersect(cell_center, Point(agent.state.p_pos), room.window.p1, room.window.p2):
-						cell.update_cell_state_once_observed()
-						if cell.has_agent():
-							cell.update_cell_belief_upon_audio(agent.action.audio)
-							audio_rew += audio_belief_reward(agent.action.audio, cell.get_belief())
-
-						#TODO: make sure agent.action has audio attribute
-						#TODO: should also add audio action reward
-
-		current_cell_state_binary = np.array([room.get_cell_states_binary() for room in self.rooms]).flatten()
-		old_cell_state_binary = world.old_cell_state_binary
-		explore_cell_rew = 0.2 * np.sum(current_cell_state_binary - old_cell_state_binary)
-
-		current_belief = np.array([room.get_cell_beliefs() for room in self.rooms]).flatten()
-		old_belief = world.old_belief
-		delta_belief = np.abs(current_belief - old_belief)
-		belief_update_rew = 5.0 * np.sum(np.sqrt(delta_belief))
-
-		rew = explore_cell_rew + belief_update_rew + audio_rew
-
-		return rew
 
