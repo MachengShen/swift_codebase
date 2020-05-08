@@ -23,7 +23,6 @@ class SwiftWorld(World):
 		self.old_belief = None 					#old_belief records the belief of last step, used to calculate belief update reward
 		self.old_cell_state_binary = None     			#old_cell_state records boolean, explored or not
 		#self._time = 0
-		#TODO:
 
 	def record_old_belief(self):
 		self.old_belief = np.array([room.get_cell_beliefs() for room in self.rooms]).flatten()
@@ -33,7 +32,6 @@ class SwiftWorld(World):
 
 	#def increment_world_time(self):
 	#	self._time += 1
-
 
 class DummyAgent(Entity):
 	#super class of red and grey agent that use pre-defined policies
@@ -81,7 +79,6 @@ class CellState(Enum):
 	ExploredNoAgent = 2
 	ExploredHasAgent = 3
 
-
 CELL_STATE_ENCODING = {CellState.Unexplored: np.array([1, 0, 0]),
 					   CellState.Unexplored: np.array([0, 1, 0]),
 					   CellState.Unexplored: np.array([0, 0, 1])
@@ -98,7 +95,6 @@ class Room_cell(object):
 		else:
 			self._occupant_agent = None
 		self._belief = belief   				#belief of occupant_agent being red
-
 
 	def has_agent(self):
 		return self._occupant_agent is not None
@@ -169,22 +165,12 @@ class Point:
 		#generate a new point which is offset by xy
 		return Point([self.x + xy[0], self.y + xy[1]])
 
-# class checkIntersection:
-# 	def __init__(self):
-
-# https: // www.geeksforgeeks.org / check - if -two - given - line - segments - intersect /
-
-
-
-
 class Room_window(object):
 	def __init__(self, p1, p2):
 		#list of two np arrays contain the two end_points of the window
 		self.p1 = p1
 		self.p2 = p2
 		raise NotImplementedError
-
-
 
 class Room(object):
 	def __init__(self, center: Point, x_scale, y_scale):
@@ -246,8 +232,6 @@ class FieldOfView(object):
 		#TODO: boresight definition?
 		vector2 = np.array([np.cos(self._attached_agent.state.boresight), np.sin(self._attached_agent.state.boresight)])
 		return True if np.inner(vector1, vector2)/np.linalg.norm(vector1) >= np.cos(self._half_view_angle) else False
-		# raise NotImplementedError
-
 
 class BlueAgent(Agent):
 	def __init__(self):
@@ -258,18 +242,15 @@ class BlueAgent(Agent):
 	def check_within_fov(self, p):
 		return self.FOV.check_within_fov(p)
 
-	# def check_
-
 class Scenario(BaseScenario):
 	def make_world(self):
 		num_blue = 3
 		num_red = 1
 		num_grey = 2
 		num_room = 4
-		arena_size = 2
+		arena_size = 2.0
 
 		self.num_room = num_room
-		# self.num_wall = num_wall
 		self.num_red = num_red
 		self.num_grey = num_grey
 
@@ -284,7 +265,7 @@ class Scenario(BaseScenario):
 
 		self._set_rooms(world, num_room, arena_size)
 		self._set_walls(world, num_room, arena_size)
-		self._set_room_windows(world, num_room, arena_size=2)
+		self._set_room_windows(world, num_room, arena_size=arena_size)
 
 		self.reset_world(world)  #reset_world also reset agents
 
@@ -302,7 +283,7 @@ class Scenario(BaseScenario):
 		for i in range(self.num_red + self.num_grey):
 			world.dummy_agents[i].room_index = permuted_index[i]
 
-	def _set_walls(self, world, num_room, arena_size=2):
+	def _set_walls(self, world, num_room, arena_size):
 		num_wall = 3 * num_room + 1
 		length = arena_size / num_room
 		window_length = length / 2
@@ -344,7 +325,7 @@ class Scenario(BaseScenario):
 		self._permute_dummy_agents_index(world)
 		self._reset_dummy_agents_location(world)  #room states are also reset
 		world.record_old_belief()
-		raise NotImplementedError
+		world.record_old_cell_state_binary()
 
 	def benchmark_data(self, agent, world):
 		# returns data for benchmarking purposes
@@ -363,10 +344,7 @@ class Scenario(BaseScenario):
 			other_pos.append(other.state.p_pos - agent.state.p_pos)
 			other_vel.append(other.state.p_vel)
 			other_heading.append(other.state.boresight)
-		# raise NotImplementedError
-		# TODO:
-		# blueagents' state,
-		# cell location, has_agent, belief, within_fov
+
 		cell_info = []
 
 		def encode_boolean(bool):
