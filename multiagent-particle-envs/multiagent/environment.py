@@ -51,6 +51,11 @@ class MultiAgentEnv(gym.Env):
             # communication action space
             c_action_space = spaces.Discrete(world.dim_c)
             #TODO: action space add audio and rotation
+            rotation_action_space = spaces.Discrete(world.dim_rotation)
+            audio_action_space = spaces.Discrete(world.dim_audio)
+            total_action_space.append(rotation_action_space)
+            total_action_space.append(audio_action_space)
+
             if not agent.silent:
                 total_action_space.append(c_action_space)
             # total action space
