@@ -54,6 +54,8 @@ class SwiftWorld(World):
 		self.record_old_belief()
 		self.record_old_cell_state_binary()  #record if cell has been explored or not
 		for agent in self.agents:
+			if agent.action.audio: #audio is not None
+				audio_rew -= 0.1 	#penalize audio action
 			for room in self.rooms:
 				for cell in room.cells:
 					cell_center = cell.get_cell_center()
