@@ -9,9 +9,6 @@ class Point:
         #generate a new point which is offset by xy
         return Point([self.x + xy[0], self.y + xy[1]])
 
-
-
-
 def _onSegment(p, q, r):
     # TODO: does this method use the points defining windows?
     # TODO: if this method is also needed by other classes, then do not define as
@@ -49,10 +46,12 @@ def _orientation(p, q, r):
 # the line segment 'p1q1' and 'p2q2' intersect.
 def doIntersect(_p1, _q1, _p2, _q2):
     # TODO: does this method use the points defining windows?
+    """
     p1 = Point(_p1)
     q1 = Point(_q1)
     p2 = Point(_p2)
     q2 = Point(_q2)
+    """
     # Find the 4 orientations required for
     # the general and special cases
     o1 = _orientation(p1, q1, p2)

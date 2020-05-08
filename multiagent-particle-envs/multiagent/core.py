@@ -24,6 +24,7 @@ class Action(object):
         self.u = None
         # communication action
         self.c = None
+        #TODO: action should have rotation dim and audio dim
 
 class Wall(object):
     def __init__(self, orient='H', axis_pos=0.0, endpoints=(-1, 1), width=0.1,
@@ -197,6 +198,7 @@ class World(object):
         # update agent state
         for agent in self.agents:
             self.update_agent_state(agent)
+            #TODO: update_agent_state should have rotation update
         # calculate and store distances between all entities
         if self.cache_dists:
             self.calculate_distances()

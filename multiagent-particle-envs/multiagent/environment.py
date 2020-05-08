@@ -50,6 +50,7 @@ class MultiAgentEnv(gym.Env):
                 total_action_space.append(u_action_space)
             # communication action space
             c_action_space = spaces.Discrete(world.dim_c)
+            #TODO: action space add audio and rotation
             if not agent.silent:
                 total_action_space.append(c_action_space)
             # total action space
@@ -93,6 +94,7 @@ class MultiAgentEnv(gym.Env):
         # advance world state
         self.world.step()
         # record observation for each agent
+        #TODO: change the agent_wise reward to world reward, only invoke once
         for agent in self.agents:
             obs_n.append(self._get_obs(agent))
             reward_n.append(self._get_reward(agent))
@@ -143,12 +145,14 @@ class MultiAgentEnv(gym.Env):
     def _get_reward(self, agent):
         if self.reward_callback is None:
             return 0.0
+
         return self.reward_callback(agent, self.world)
 
     # set env action for a particular agent
     def _set_action(self, action, agent, action_space, time=None):
         agent.action.u = np.zeros(self.world.dim_p)
         agent.action.c = np.zeros(self.world.dim_c)
+        #TODO: add rotation and audip
         # process action
         if isinstance(action_space, spaces.MultiDiscrete):
             act = []
@@ -203,6 +207,7 @@ class MultiAgentEnv(gym.Env):
 
     # render environment
     def _render(self, mode='human', close=True):
+        #TODO:visualize FOV
         if close:
             # close any existic renderers
             for i,viewer in enumerate(self.viewers):

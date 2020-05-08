@@ -2,7 +2,7 @@ import numpy as np
 from multiagent.core import World, Agent, Landmark, Wall, Entity
 from multiagent.scenario import BaseScenario
 from enum import Enum, unique
-from utils import doIntersect
+from .utils import doIntersect
 
 @unique
 class AudioAction(Enum):
@@ -21,7 +21,16 @@ class SwiftWorld(World):
 	def __init__(self):
 		super(SwiftWorld, self).__init__()
 		self.old_belief = None 					#old_belief records the belief of last step, used to calculate belief update reward
+		self._time = 0
 		#TODO:
+
+	def record_old_belief(self):
+		self.old_belief[self._time] = np.array([room.get_cell_beliefs() for room in self.rooms]).flatten()
+
+	def increment_world_time(self):
+		self._time += 1
+
+
 
 class DummyAgent(Entity):
 	#super class of red and grey agent that use pre-defined policies
@@ -81,7 +90,6 @@ class Room_cell(object):
 		else:
 			self._occupant_agent = None
 		self._belief = belief   				#belief of occupant_agent being red
-		self._belief_update_reward = 0
 
 	def has_agent(self):
 		return self._occupant_agent is not None
@@ -105,6 +113,10 @@ class Room_cell(object):
 		self._cell_state = CellState.ExploredNoAgent
 
 	def update_cell_belief_upon_audio(self, audio: AudioAction):
+		if not audio: #audio is None, agent does not take audio action
+			#TODO: make sure in policy decoding steps, assign None to audio action if agent did not take it
+			return
+
 		if not self.has_agent():
 			return
 		sampled_response = self._occupant_agent.sample_response_to_audio(audio)
@@ -121,11 +133,13 @@ class Room_cell(object):
 	def add_agent(self, agent: DummyAgent):
 		assert not self.has_agent()
 		self._occupant_agent = agent
-		#TODO: update agent_state
+		self._occupant_agent.state.p_pos = self._center
 
-
-	def reset_cell_state(self):
-		#remove occupant agent and set cell state to unexplored
+	def reset_cell_states(self):
+		#remove occupant agent and set cell state to unexplored, and cell belief to 0.5
+		self._occupant_agent = None
+		self._cell_state = CellState.Unexplored
+		self._belief = 0.5
 
 
 class Point:
@@ -168,6 +182,10 @@ class Room(object):
 		self.cells = [Room_cell(c_center, c_location) for c_center, c_location in zip(cell_centers, cell_locations)]
 		self.window = None
 
+	def reset_room_cell_states(self):
+		for cell in self.cells:
+			cell.reset_cell_states()
+
 	def has_agent(self) -> bool:
 		return any([cell.has_agent() for cell in self.cells])
 
@@ -191,7 +209,7 @@ class Room(object):
 		return [cell.get_cell_center() for cell in self.cells]
 
 	def get_cell_beliefs(self):
-		return [cell.get_cell_belief() for cell in self.cells]
+		return [cell.get_belief() for cell in self.cells]
 
 
 class FieldOfView(object):
@@ -252,18 +270,16 @@ class Scenario(BaseScenario):
 		raise NotImplementedError
 	
 	def _reset_dummy_agents_location(self, world):
-		#use 'add_agent' method of the room object
-		for i in range(self.num_red + self.num_grey):
-			room_index = world.dummy_agents[i].room_index
-			world.rooms[room_index].add_agent(world.dummy_agents[i])
-		# raise NotImplementedError
+		for room in world.rooms:
+			room.reset_room_cell_states()
+
+		for i, agent in enumerate(world.dummy_agents):
+			world.rooms[agent.room_index].add_agent(agent)
 
 	def _permute_dummy_agents_index(self, world):
 		permuted_index = np.random.permutation(self.num_room)
 		for i in range(self.num_red + self.num_grey):
 			world.dummy_agents[i].room_index = permuted_index[i]
-		# return np.random.permutation(self.num_room)[:self.num_red + self.num_grey]
-		# raise NotImplementedError
 
 	def _set_walls(self, world, num_room, arena_size=2):
 		num_wall = 3 * num_room + 1
@@ -283,7 +299,6 @@ class Scenario(BaseScenario):
 		wall_endpoints.append((arena_size/2, arena_size/2-length))
 
 		world.walls = [Wall(orient=wall_orient[i], axis_pos=wall_axis_pos[i], endpoints=wall_endpoints[i]) for i in range(num_wall)]
-		# raise NotImplementedError
 
 	def _set_rooms(self, world, num_room, arena_size=2):
 		length = arena_size / num_room
@@ -298,12 +313,16 @@ class Scenario(BaseScenario):
 			room.window = Room_window(p1=np.array([-arena_size/2 + length*i + window_length, arena_size/2-length]),
 										  p2=np.array([-arena_size/2 + length*(i+1), arena_size/2-length]))
 
+	def _reset_blue_sates(self, world):
+		#TODO: chuangchuang
+		raise NotImplementedError
 
 
 	def reset_world(self, world):
-		world._permute_dummy_agents_index()
-		world._reset_dummy_agents_location()
-		world._initilize_room_belief()
+		self._reset_blue_states(world)
+		self._permute_dummy_agents_index(world)
+		self._reset_dummy_agents_location(world)  #room states are also reset
+		world.record_old_belief()
 		raise NotImplementedError
 
 	def benchmark_data(self, agent, world):
@@ -311,10 +330,7 @@ class Scenario(BaseScenario):
 		return self.reward(agent, world)
 
 	def reward(self, agent, world):
-		rew_belief = 0
-		reward_penality = 0
-		raise NotImplementedError
-		return rew_belief + reward_penality
+		raise Exception("use self.step_belief(), should not call for every agent")
 
 	def observation(self, agent, world):
 		# info from the other agents
@@ -327,7 +343,7 @@ class Scenario(BaseScenario):
 			other_vel.append(other.state.p_vel)
 			other_heading.append(other.state.boresight)
 		# raise NotImplementedError
-		#TODO:
+		# TODO:
 		# blueagents' state,
 		# cell location, has_agent, belief, within_fov
 		cell_info = []
@@ -339,3 +355,32 @@ class Scenario(BaseScenario):
 				cell_info.extend([cell_pos, flag_1, flag_2, cell._cell_location, cell.occupant_agent, cell._belief])
 
 		return np.concatenate([agent.state.p_vel] + [agent.state.p_pos] + [agent.state.boresight] + other_pos + other_vel + other_heading + cell_info)
+
+	def step_belief(self, world):
+		#this step function is the additional to the physical state update
+		#should be called before calling reward
+		belief_update_rew = 0
+		audio_rew = 0
+		#TODO: make sure each time step, this function has been called once and only once
+		#TODO: should modify environment._step()
+		world.record_old_belief()
+		for agent in world.agents:
+			for room in world.rooms:
+				for cell in room.cells:
+					cell_center = cell.get_cell_center()
+					if agent.check_within_fov(cell_center) and doIntersect(cell_center, Point(agent.state.p_pos), room.window.p1, room.window.p2):
+						cell.update_cell_belief_upon_audio(agent.action.audio)
+						#TODO: make sure agent.action has audio attribute
+						#TODO: should also add audio action reward
+
+		current_belief = np.array([room.get_cell_beliefs() for room in self.rooms]).flatten()
+		old_belief = world.old_belief
+		delta_belief = np.abs(current_belief - old_belief)
+		belief_update_rew = 5.0 * np.sum(np.sqrt(delta_belief))
+
+		rew = belief_update_rew + audio_rew
+
+
+
+
+	def apply_audio_action(self, world):
