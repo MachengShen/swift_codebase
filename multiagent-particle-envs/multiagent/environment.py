@@ -93,6 +93,7 @@ class MultiAgentEnv(gym.Env):
             self._set_action(action_n[i], agent, self.action_space[i])
         # advance world state
         self.world.step()
+        #TODO: update belief
         # record observation for each agent
         #TODO: change the agent_wise reward to world reward, only invoke once
         for agent in self.agents:
