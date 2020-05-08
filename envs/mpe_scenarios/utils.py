@@ -44,7 +44,7 @@ def _orientation(p, q, r):
 
 # The main function that returns true if
 # the line segment 'p1q1' and 'p2q2' intersect.
-def doIntersect(_p1, _q1, _p2, _q2):
+def doIntersect(p1, q1, p2, q2):
     # TODO: does this method use the points defining windows?
     """
     p1 = Point(_p1)
