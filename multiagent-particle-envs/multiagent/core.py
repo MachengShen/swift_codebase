@@ -25,6 +25,8 @@ class Action(object):
         # communication action
         self.c = None
         #TODO: action should have rotation dim and audio dim
+        self.r = None
+        self.audio = None
 
 class Wall(object):
     def __init__(self, orient='H', axis_pos=0.0, endpoints=(-1, 1), width=0.1,
@@ -65,6 +67,8 @@ class Entity(object):
         # max speed and accel
         self.max_speed = None
         self.accel = None
+        # max angle speed
+        self.max_angle_speed = None
         # state
         self.state = EntityState()
         # mass
@@ -91,6 +95,8 @@ class Agent(Entity):
         self.blind = False
         # physical motor noise amount
         self.u_noise = None
+        # physical motor noise amount for rotation
+        self.r_noise = None
         # communication noise amount
         self.c_noise = None
         # control range
@@ -195,10 +201,17 @@ class World(object):
         p_force = self.apply_environment_force(p_force)
         # integrate physical state
         self.integrate_state(p_force)
+
+        # gather forces applied to entities rotations
+        p_force_rotation = [None] * len(self.entities)
+        # apply agent physical controls
+        p_force_rotation = self.apply_action_force_rotation(p_force_rotation)
+        # integrate physical state
+        self.integrate_state_rotation(p_force_rotation)
+
         # update agent state
         for agent in self.agents:
             self.update_agent_state(agent)
-            #TODO: update_agent_state should have rotation update
         # calculate and store distances between all entities
         if self.cache_dists:
             self.calculate_distances()
@@ -212,6 +225,15 @@ class World(object):
                 noise = np.random.randn(*agent.action.u.shape) * agent.u_noise if agent.u_noise else 0.0
                 p_force[i] = (agent.mass * agent.accel if agent.accel is not None else agent.mass) * agent.action.u + noise
         return p_force
+
+        # gather agent action forces
+    def apply_action_force_rotation(self, p_force_rotation):
+        # set applied forces
+        for i, agent in enumerate(self.agents):
+            if agent.movable:
+                noise = np.random.randn(*agent.action.r.shape) * agent.r_noise if agent.r_noise else 0.0
+                p_force_rotation[i] = agent.action.r + noise
+        return p_force_rotation
 
     # gather physical forces acting on entities
     def apply_environment_force(self, p_force):
@@ -248,6 +270,20 @@ class World(object):
                     entity.state.p_vel = entity.state.p_vel / np.sqrt(np.square(entity.state.p_vel[0]) +
                                                                   np.square(entity.state.p_vel[1])) * entity.max_speed
             entity.state.p_pos += entity.state.p_vel * self.dt
+
+    # integrate physical state
+    def integrate_state_rotation(self, p_force_rotation):
+        for i, entity in enumerate(self.entities):
+            if not entity.movable: continue
+            # entity.state.p_vel = entity.state.p_vel * (1 - self.damping)
+            if (p_force_rotation[i] is not None):
+                entity.state.boresight += (p_force_rotation[i]) * self.dt
+            # if entity.max_angle_speed is not None:
+            #     speed = np.sqrt(np.square(entity.state.p_vel[0]) + np.square(entity.state.p_vel[1]))
+            #     if speed > entity.max_speed:
+            #         entity.state.p_vel = entity.state.p_vel / np.sqrt(np.square(entity.state.p_vel[0]) +
+            #                                                           np.square(entity.state.p_vel[1])) * entity.max_speed
+            # entity.state.p_pos += entity.state.p_vel * self.dt
 
     def update_agent_state(self, agent):
         # set communication state (directly for now)
