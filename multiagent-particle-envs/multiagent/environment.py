@@ -203,6 +203,17 @@ class MultiAgentEnv(gym.Env):
             else:
                 agent.action.c = action[0]
             action = action[1:]
+
+        # rotation action
+        agent.action.r = action[0]
+        action = action[1:]
+
+        # audio action
+        agent.action.audio = action[0]
+        # 0: doing nothing; 1: hands up; 2: freeze
+        if action[0] == 0: agent.action.audio = None
+        action = action[1:]
+
         # make sure we used all elements of action
         assert len(action) == 0
 

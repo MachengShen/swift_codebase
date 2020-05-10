@@ -58,24 +58,52 @@ class DiscretePolicy(BasePolicy):
                 return_log_pi=False, regularize=False,
                 return_entropy=False):
         out = super(DiscretePolicy, self).forward(obs)
-        probs = F.softmax(out, dim=1)
+        _, action_dim = out.size()
+        u_action_dim = action_dim - 4
+
+        probs_u = F.softmax(out[:,0:u_action_dim], dim=1)
         on_gpu = next(self.parameters()).is_cuda
         if sample:
-            int_act, act = categorical_sample(probs, use_cuda=on_gpu)
+            int_act, act_u = categorical_sample(probs_u, use_cuda=on_gpu)
         else:
-            act = onehot_from_logits(probs)
-        rets = [act]
-        if return_log_pi or return_entropy:
-            log_probs = F.log_softmax(out, dim=1)
-        if return_all_probs:
-            rets.append(probs)
-        if return_log_pi:
-            # return log probability of selected action
-            rets.append(log_probs.gather(1, int_act))
-        if regularize:
-            rets.append([(out**2).mean()])
-        if return_entropy:
-            rets.append(-(log_probs * probs).sum(1).mean())
+            act_u = onehot_from_logits(probs_u)
+        rets = [act_u]
+
+        action_r = out[:, u_action_dim]
+        rets.append(action_r)
+
+        probs_audio = F.softmax(out[:, u_action_dim+1:], dim=1)
+        # on_gpu = next(self.parameters()).is_cuda
+        if sample:
+            _, act_audio = categorical_sample(probs_audio, use_cuda=on_gpu)
+        else:
+            act_audio = onehot_from_logits(probs_audio)
+        rets.append(act_audio)
+
+
         if len(rets) == 1:
             return rets[0]
         return rets
+
+
+        # probs = F.softmax(out, dim=1)
+        # on_gpu = next(self.parameters()).is_cuda
+        # if sample:
+        #     int_act, act = categorical_sample(probs, use_cuda=on_gpu)
+        # else:
+        #     act = onehot_from_logits(probs)
+        # rets = [act]
+        # if return_log_pi or return_entropy:
+        #     log_probs = F.log_softmax(out, dim=1)
+        # if return_all_probs:
+        #     rets.append(probs)
+        # if return_log_pi:
+        #     # return log probability of selected action
+        #     rets.append(log_probs.gather(1, int_act))
+        # if regularize:
+        #     rets.append([(out**2).mean()])
+        # if return_entropy:
+        #     rets.append(-(log_probs * probs).sum(1).mean())
+        # if len(rets) == 1:
+        #     return rets[0]
+        # return rets
