@@ -1,5 +1,3 @@
-
-
 class Point:
     def __init__(self, xy):
         self.x = xy[0]

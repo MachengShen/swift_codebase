@@ -1,8 +1,8 @@
 import numpy as np
-from multiagent.core import World, Agent, Landmark, Wall, Entity
+from multiagent.core import World, Agent, Wall, Entity
 from multiagent.scenario import BaseScenario
 from enum import Enum, unique
-from .utils import doIntersect, Point
+from multiagent.utils import Point, doIntersect
 
 @unique
 class AudioAction(Enum):
@@ -218,7 +218,6 @@ class Room_window(object):
 		#list of two np arrays contain the two end_points of the window
 		self.p1 = p1
 		self.p2 = p2
-		raise NotImplementedError
 
 class Room(object):
 	def __init__(self, center: Point, x_scale, y_scale):
@@ -229,7 +228,7 @@ class Room(object):
 						self.center.new_point([   x_scale / 4, - y_scale / 4])]
 		cell_locations = [CellLocation.UpperLeft,
 						  CellLocation.UpperRight,
-						  CellLocation.BottomLeft.
+						  CellLocation.BottomLeft,
 						  CellLocation.BottomRight]
 		self.cells = [Room_cell(c_center, c_location) for c_center, c_location in zip(cell_centers, cell_locations)]
 		self.window = None
@@ -251,7 +250,7 @@ class Room(object):
 
 	def add_agent(self, agent: DummyAgent):
 		assert not self.has_agent(), "room already contains one agent"
-		rand_cell_ind = np.random.choice(list(range(4)))[0]
+		rand_cell_ind = np.random.choice(list(range(4)))
 		self.cells[rand_cell_ind].add_agent(agent)
 
 	def get_cell_states(self):
@@ -325,23 +324,26 @@ class Scenario(BaseScenario):
 
 		self.reset_world(world)  #reset_world also reset agents
 
-		raise NotImplementedError
 	
 
 	def _set_walls(self, world, num_room, arena_size):
 		num_wall = 3 * num_room + 1
 		length = arena_size / num_room
 		window_length = length / 2
-		wall_orient = "H" * num_wall
+		#wall_orient = "H" * num_wall
+		# TODO: chuangchuang check correctness of this line
+		wall_orient = ('HVH' * num_room) + 'H'
 		wall_axis_pos = np.zeros((num_wall))
 		wall_endpoints = []
 		for i in range(num_room):
-			wall_orient[3*i:3*i+3] = 'HVH'
+			#wall_orient[3*i:3*i+3] = 'HVH'
 			wall_axis_pos[3*i:3*i+3] = np.array([arena_size/2, -arena_size/2 + length*i, arena_size/2-length])
 			wall_endpoints.append((-arena_size/2 + length*i, -arena_size/2 + length*(i+1)))
 			wall_endpoints.append((arena_size/2, arena_size/2-length))
 			wall_endpoints.append((-arena_size/2 + length*i, -arena_size/2 + length*(i+1) - window_length))
-		wall_orient[num_room-1] = 'V'
+		#wall_orient[num_room-1] = 'V'
+		# TODO: chuangchuang check correctness of this line
+		wall_orient = wall_orient[:num_room - 1] + 'V' + wall_orient[num_room:]
 		wall_axis_pos[num_room-1] = arena_size/2
 		wall_endpoints.append((arena_size/2, arena_size/2-length))
 
@@ -349,7 +351,7 @@ class Scenario(BaseScenario):
 
 	def _set_rooms(self, world, num_room, arena_size=2):
 		length = arena_size / num_room
-		room_centers = np.array([[-arena_size/2 + length/2 + i * length, arena_size/2 - length/2] for i in num_room])
+		room_centers = np.array([[-arena_size/2 + length/2 + i * length, arena_size/2 - length/2] for i in range(num_room)])
 		world.rooms = [Room(Point(room_centers[i, :]), length, length) for i in range(num_room)]
 		# raise NotImplementedError
 
