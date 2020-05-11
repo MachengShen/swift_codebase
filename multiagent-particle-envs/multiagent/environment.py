@@ -67,7 +67,7 @@ class MultiAgentEnv(gym.Env):
                     act_space = spaces.Tuple(total_action_space)
                 self.action_space.append(act_space)
             #     TODO: add action_space.n
-                self.action_space.n = u_action_space.n + rotation_action_space.n + audio_action_space.n
+                setattr(self.action_space[0], 'n', u_action_space.n + rotation_action_space.n + audio_action_space.n)
             else:
                 self.action_space.append(total_action_space[0])
             # observation space
