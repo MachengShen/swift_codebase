@@ -98,18 +98,13 @@ class MultiAgentEnv(gym.Env):
             self._set_action(action_n[i], agent, self.action_space[i])
         # advance world state
         self.world.step()
-        #TODO: update belief
-        # record observation for each agent
-        #TODO: change the agent_wise reward to world reward, only invoke once
+        reward = self.world.step_belief()
         for agent in self.agents:
             obs_n.append(self._get_obs(agent))
-            reward_n.append(self._get_reward(agent))
+            #reward_n.append(self._get_reward(agent))
             done_n.append(self._get_done(agent))
-
             info_n['n'].append(self._get_info(agent))
-
         # all agents get total reward in cooperative case
-        reward = np.sum(reward_n)
         if self.shared_reward:
             reward_n = [reward] * self.n
         if self.post_step_callback is not None:
@@ -158,8 +153,7 @@ class MultiAgentEnv(gym.Env):
     def _set_action(self, action, agent, action_space, time=None):
         agent.action.u = np.zeros(self.world.dim_p)
         agent.action.c = np.zeros(self.world.dim_c)
-        #TODO: add rotation and audip
-        # process action
+
         if isinstance(action_space, spaces.MultiDiscrete):
             act = []
             size = action_space.high - action_space.low + 1
