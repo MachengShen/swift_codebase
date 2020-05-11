@@ -182,14 +182,14 @@ class Room_cell(object):
 		if not self.has_agent():
 			return
 		sampled_response = self._occupant_agent.sample_response_to_audio(audio)
-		belief_vector = np.array([self._belief, 1 - self._belief])
+		belief_vector = np.array([self._belief[0], 1 - self._belief[0]])
 		audio_index = audio.value - 1
 		response_index = sampled_response.value - 1
 		likelihood_vector = np.array([RedResponseProbMatrix[audio_index][response_index],
 									  GreyResponseProbMatrix[audio_index][response_index]])
 		belief_vector = belief_vector * likelihood_vector
 		belief_vector = belief_vector / np.sum(belief_vector)
-		self._belief = belief_vector[0]
+		self._belief = np.array([belief_vector[0]])
 		return
 
 	def add_agent(self, agent: DummyAgent):
@@ -201,7 +201,7 @@ class Room_cell(object):
 		#remove occupant agent and set cell state to unexplored, and cell belief to 0.5
 		self._occupant_agent = None
 		self._cell_state = CellState.Unexplored
-		self._belief = 0.5
+		self._belief = np.array([0.5])
 
 
 # class Point:
@@ -277,7 +277,7 @@ class FieldOfView(object):
 		#input p 2x1 numpy array
 		vector1 = np.subtract(p, self._attached_agent.state.p_pos)
 		#TODO: boresight definition?
-		vector2 = np.array([np.cos(self._attached_agent.state.boresight), np.sin(self._attached_agent.state.boresight)])
+		vector2 = np.array([np.cos(self._attached_agent.state.boresight), np.sin(self._attached_agent.state.boresight)]).squeeze()
 		return True if np.inner(vector1, vector2)/np.linalg.norm(vector1) >= np.cos(self._half_view_angle) else False
 
 class BlueAgent(Agent):
@@ -314,6 +314,7 @@ class Scenario(BaseScenario):
 		for i, agent in enumerate(world.agents):
 			agent.name = 'agent %d' % i
 
+		self._reset_blue_states(world)
 
 		world.dummy_agents = [RedAgent() for i in range(num_red)]
 		world.dummy_agents += [GreyAgent() for i in range(num_grey)]
@@ -324,7 +325,7 @@ class Scenario(BaseScenario):
 
 		self.reset_world(world)  #reset_world also reset agents
 
-	
+		return world
 
 	def _set_walls(self, world, num_room, arena_size):
 		num_wall = 3 * num_room + 1
@@ -366,8 +367,10 @@ class Scenario(BaseScenario):
 		# raise NotImplementedError
 		for agent in world.agents:
 			agent.silent = True
+			# TODO: make sure that blue agents do not collide into the walls
 			agent.state.p_pos = np.random.uniform(-1, +1, world.dim_p)
 			agent.state.p_vel = np.zeros(world.dim_p)
+			agent.state.boresight = np.array([np.random.uniform(-np.pi, +np.pi)])
 			agent.state.c = np.zeros(world.dim_c)
 
 	def _permute_dummy_agents_index(self, world):
