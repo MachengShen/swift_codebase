@@ -58,58 +58,58 @@ class DiscretePolicy(BasePolicy):
                 return_log_pi=False, regularize=False,
                 return_entropy=False):
         out = super(DiscretePolicy, self).forward(obs)
-        _, action_dim = out.size()
-        # dim(u_aaction)=5, dim(r_action) = 2, dim(audio_action = 3)
-        r_action_dim = 2
-        audio_action_dim = 3
-        u_action_dim = action_dim - (r_action_dim + audio_action_dim)
-        assert u_action_dim == 5, "policy dimensions"
-
-
-        probs_u = F.softmax(out[:,0:u_action_dim], dim=1)
-        on_gpu = next(self.parameters()).is_cuda
-        if sample:
-            int_act, act_u = categorical_sample(probs_u, use_cuda=on_gpu)
-        else:
-            act_u = onehot_from_logits(probs_u)
-
-        # TODO: change rotation to discrete action, and output prob_r, also change the step in environment
-        # action_r = out[:, u_action_dim].view(-1, 1)
-        probs_r = F.softmax(out[:, u_action_dim:u_action_dim+r_action_dim], dim=1)
-        # on_gpu = next(self.parameters()).is_cuda
-        if sample:
-            _, act_r = categorical_sample(probs_r, use_cuda=on_gpu)
-        else:
-            act_r = onehot_from_logits(probs_r)
-
-        probs_audio = F.softmax(out[:, u_action_dim+r_action_dim:], dim=1)
-        # on_gpu = next(self.parameters()).is_cuda
-        if sample:
-            _, act_audio = categorical_sample(probs_audio, use_cuda=on_gpu)
-        else:
-            act_audio = onehot_from_logits(probs_audio)
-
-        return torch.cat([act_u, act_r, act_audio], dim=1)
-
-
-        # probs = F.softmax(out, dim=1)
+        # _, action_dim = out.size()
+        # # dim(u_aaction)=5, dim(r_action) = 2, dim(audio_action = 3)
+        # r_action_dim = 2
+        # audio_action_dim = 3
+        # u_action_dim = action_dim - (r_action_dim + audio_action_dim)
+        # assert u_action_dim == 5, "policy dimensions"
+        #
+        #
+        # probs_u = F.softmax(out[:,0:u_action_dim], dim=1)
         # on_gpu = next(self.parameters()).is_cuda
         # if sample:
-        #     int_act, act = categorical_sample(probs, use_cuda=on_gpu)
+        #     int_act, act_u = categorical_sample(probs_u, use_cuda=on_gpu)
         # else:
-        #     act = onehot_from_logits(probs)
-        # rets = [act]
-        # if return_log_pi or return_entropy:
-        #     log_probs = F.log_softmax(out, dim=1)
-        # if return_all_probs:
-        #     rets.append(probs)
-        # if return_log_pi:
-        #     # return log probability of selected action
-        #     rets.append(log_probs.gather(1, int_act))
-        # if regularize:
-        #     rets.append([(out**2).mean()])
-        # if return_entropy:
-        #     rets.append(-(log_probs * probs).sum(1).mean())
-        # if len(rets) == 1:
-        #     return rets[0]
-        # return rets
+        #     act_u = onehot_from_logits(probs_u)
+        #
+        # # TODO: change rotation to discrete action, and output prob_r, also change the step in environment
+        # # action_r = out[:, u_action_dim].view(-1, 1)
+        # probs_r = F.softmax(out[:, u_action_dim:u_action_dim+r_action_dim], dim=1)
+        # # on_gpu = next(self.parameters()).is_cuda
+        # if sample:
+        #     _, act_r = categorical_sample(probs_r, use_cuda=on_gpu)
+        # else:
+        #     act_r = onehot_from_logits(probs_r)
+        #
+        # probs_audio = F.softmax(out[:, u_action_dim+r_action_dim:], dim=1)
+        # # on_gpu = next(self.parameters()).is_cuda
+        # if sample:
+        #     _, act_audio = categorical_sample(probs_audio, use_cuda=on_gpu)
+        # else:
+        #     act_audio = onehot_from_logits(probs_audio)
+        #
+        # return torch.cat([act_u, act_r, act_audio], dim=1)
+
+
+        probs = F.softmax(out, dim=1)
+        on_gpu = next(self.parameters()).is_cuda
+        if sample:
+            int_act, act = categorical_sample(probs, use_cuda=on_gpu)
+        else:
+            act = onehot_from_logits(probs)
+        rets = [act]
+        if return_log_pi or return_entropy:
+            log_probs = F.log_softmax(out, dim=1)
+        if return_all_probs:
+            rets.append(probs)
+        if return_log_pi:
+            # return log probability of selected action
+            rets.append(log_probs.gather(1, int_act))
+        if regularize:
+            rets.append([(out**2).mean()])
+        if return_entropy:
+            rets.append(-(log_probs * probs).sum(1).mean())
+        if len(rets) == 1:
+            return rets[0]
+        return rets

@@ -172,6 +172,7 @@ class MultiAgentEnv(gym.Env):
         else:
             action = [action]
 
+        # action_current = action[0]
         if agent.movable:
             # physical action
             if self.discrete_action_input:
@@ -206,7 +207,9 @@ class MultiAgentEnv(gym.Env):
             action = action[1:]
 
         # rotation action
+        # rotation_encoding = action_current[self.world.dim_p * 2 + 1:self.world.dim_p * 2 + 1+self.world.dim_rotation]
         rotation_encoding = action[0]
+        agent.action.r = 0
         if np.abs(rotation_encoding[0] - 1) < 1e-5: agent.action.r = -np.pi/36
         if np.abs(rotation_encoding[1] - 1) < 1e-5: agent.action.r = +np.pi/36
         # agent.action.r = action[0]
@@ -214,13 +217,16 @@ class MultiAgentEnv(gym.Env):
 
         # audio action
         # TODO: it is one-hot, so only one 1, but can be multiple zeros, so should be np.abs(audio_encoding[0] - 1)
+        # audio_encoding = action_current[self.world.dim_p * 2 + 1+self.world.dim_rotation:]
         audio_encoding = action[0]
+        agent.action.audio = None
         if np.abs(audio_encoding[0] - 1) < 1e-5: agent.action.audio = None
         if np.abs(audio_encoding[1] - 1) < 1e-5: agent.action.audio = AudioAction.HandsUp
         if np.abs(audio_encoding[2] - 1) < 1e-5: agent.action.audio = AudioAction.Freeze
 
         action = action[1:]
 
+        # assert len(action_current) == self.world.dim_p * 2 + 1 + self.world.dim_rotation + self.dim_audio
         # make sure we used all elements of action
         assert len(action) == 0
 
