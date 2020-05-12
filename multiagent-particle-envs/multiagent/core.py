@@ -133,7 +133,7 @@ class World(object):
         self.cached_dist_vect = None
         self.cached_dist_mag = None
 
-        self.dim_rotation = 1
+        self.dim_rotation = 2
         self.dim_audio = 3
 
     # return all entities in the world

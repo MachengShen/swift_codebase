@@ -56,7 +56,6 @@ class MultiAgentEnv(gym.Env):
                 total_action_space.append(u_action_space)
             # communication action space
             c_action_space = spaces.Discrete(world.dim_c)
-            #TODO: action space add audio and rotation
             rotation_action_space = spaces.Discrete(world.dim_rotation)
             audio_action_space = spaces.Discrete(world.dim_audio)
             total_action_space.append(rotation_action_space)
@@ -207,10 +206,13 @@ class MultiAgentEnv(gym.Env):
             action = action[1:]
 
         # rotation action
-        agent.action.r = action[0]
+        if action[0] == 1: agent.action.r = -np.pi/36
+        if action[0] == 2: agent.action.r = +np.pi/36
+        # agent.action.r = action[0]
         action = action[1:]
 
         # audio action
+        # TODO: all action are discrete, thus only has one dimension
         audio_encoding = action[0]
         if np.abs(audio_encoding[0] - 0) < 1e-5: agent.action.audio = None
         if np.abs(audio_encoding[1] - 0) < 1e-5: agent.action.audio = AudioAction.HandsUp

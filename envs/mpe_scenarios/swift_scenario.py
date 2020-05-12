@@ -332,8 +332,7 @@ class Scenario(BaseScenario):
 		length = arena_size / num_room
 		window_length = length / 2
 		#wall_orient = "H" * num_wall
-		# TODO: chuangchuang check correctness of this line
-		wall_orient = ('HVH' * num_room) + 'H'
+		wall_orient = ('HVH' * num_room) + 'V'
 		wall_axis_pos = np.zeros((num_wall))
 		wall_endpoints = []
 		for i in range(num_room):
@@ -344,8 +343,8 @@ class Scenario(BaseScenario):
 			wall_endpoints.append((-arena_size/2 + length*i, -arena_size/2 + length*(i+1) - window_length))
 		#wall_orient[num_room-1] = 'V'
 		# TODO: chuangchuang check correctness of this line
-		wall_orient = wall_orient[:num_room - 1] + 'V' + wall_orient[num_room:]
-		wall_axis_pos[num_room-1] = arena_size/2
+		# wall_orient = wall_orient[:num_room - 1] + 'V' + wall_orient[num_room:]
+		wall_axis_pos[num_wall-1] = arena_size/2
 		wall_endpoints.append((arena_size/2, arena_size/2-length))
 
 		world.walls = [Wall(orient=wall_orient[i], axis_pos=wall_axis_pos[i], endpoints=wall_endpoints[i]) for i in range(num_wall)]
@@ -367,8 +366,8 @@ class Scenario(BaseScenario):
 		# raise NotImplementedError
 		for agent in world.agents:
 			agent.silent = True
-			# TODO: make sure that blue agents do not collide into the walls
 			agent.state.p_pos = np.random.uniform(-1, +1, world.dim_p)
+			if agent.state.p_pos[-1] > 0: agent.state.p_pos[-1] = 0
 			agent.state.p_vel = np.zeros(world.dim_p)
 			agent.state.boresight = np.array([np.random.uniform(-np.pi, +np.pi)])
 			agent.state.c = np.zeros(world.dim_c)

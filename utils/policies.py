@@ -59,7 +59,11 @@ class DiscretePolicy(BasePolicy):
                 return_entropy=False):
         out = super(DiscretePolicy, self).forward(obs)
         _, action_dim = out.size()
-        u_action_dim = action_dim - 4
+        # dim(u_aaction)=5, dim(r_action) = 2, dim(audio_action = 3)
+        r_action_dim = 2
+        audio_action_dim = 3
+        u_action_dim = action_dim - (r_action_dim + audio_action_dim)
+        assert u_action_dim == 5 + r_action_dim + audio_action_dim, "policy dimensions"
 
         probs_u = F.softmax(out[:,0:u_action_dim], dim=1)
         on_gpu = next(self.parameters()).is_cuda
@@ -67,16 +71,24 @@ class DiscretePolicy(BasePolicy):
             int_act, act_u = categorical_sample(probs_u, use_cuda=on_gpu)
         else:
             act_u = onehot_from_logits(probs_u)
-        # TODO: change rotation to discrete action, and output prob_r, also change the step in environment
-        action_r = out[:, u_action_dim].view(-1, 1)
 
-        probs_audio = F.softmax(out[:, u_action_dim+1:], dim=1)
+        # TODO: change rotation to discrete action, and output prob_r, also change the step in environment
+        # action_r = out[:, u_action_dim].view(-1, 1)
+        probs_r = F.softmax(out[:, u_action_dim:u_action_dim+r_action_dim], dim=1)
+        # on_gpu = next(self.parameters()).is_cuda
+        if sample:
+            _, act_r = categorical_sample(probs_r, use_cuda=on_gpu)
+        else:
+            act_r = onehot_from_logits(probs_r)
+
+        probs_audio = F.softmax(out[:, u_action_dim+r_action_dim:], dim=1)
         # on_gpu = next(self.parameters()).is_cuda
         if sample:
             _, act_audio = categorical_sample(probs_audio, use_cuda=on_gpu)
         else:
             act_audio = onehot_from_logits(probs_audio)
-        return torch.cat([act_u, action_r, act_audio], dim=1)
+
+        return torch.cat([act_u, act_r, act_audio], dim=1)
 
 
         # probs = F.softmax(out, dim=1)
