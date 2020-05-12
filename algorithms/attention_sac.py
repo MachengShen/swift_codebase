@@ -278,3 +278,19 @@ class AttentionSAC(object):
             instance.target_critic.load_state_dict(critic_params['target_critic'])
             instance.critic_optimizer.load_state_dict(critic_params['critic_optimizer'])
         return instance
+
+    def init_from_save_self(self, filename, load_critic=False):
+        """
+        Instantiate instance of this class from file created by 'save' method
+        """
+        save_dict = torch.load(filename)
+        instance = self
+        instance.init_dict = save_dict['init_dict']
+        for a, params in zip(instance.agents, save_dict['agent_params']):
+            a.load_params(params)
+
+        if load_critic:
+            critic_params = save_dict['critic_params']
+            instance.critic.load_state_dict(critic_params['critic'])
+            instance.target_critic.load_state_dict(critic_params['target_critic'])
+            instance.critic_optimizer.load_state_dict(critic_params['critic_optimizer'])
