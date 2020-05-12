@@ -90,7 +90,7 @@ class DummyAgent(Entity):
 	def sample_response_to_audio(self, audio: AudioAction):
 		#this method takes in an audio action by the blue agent
 		#output a probablistic response according to the agent type
-		response_probability = self.response_probability_matrix[AudioAction.value - 1] #enum member value start from 1
+		response_probability = self.response_probability_matrix[audio.value - 1] #enum member value start from 1
 		sampled_response_index = np.random.choice(len(response_probability), 1, p=response_probability)[0]
 		return AudioResponse(sampled_response_index + 1)
 
