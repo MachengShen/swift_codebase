@@ -67,7 +67,7 @@ class DiscretePolicy(BasePolicy):
             int_act, act_u = categorical_sample(probs_u, use_cuda=on_gpu)
         else:
             act_u = onehot_from_logits(probs_u)
-
+        # TODO: change rotation to discrete action, and output prob_r, also change the step in environment
         action_r = out[:, u_action_dim].view(-1, 1)
 
         probs_audio = F.softmax(out[:, u_action_dim+1:], dim=1)
