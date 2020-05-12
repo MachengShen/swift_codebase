@@ -65,6 +65,7 @@ class DiscretePolicy(BasePolicy):
         u_action_dim = action_dim - (r_action_dim + audio_action_dim)
         assert u_action_dim == 5, "policy dimensions"
 
+
         probs_u = F.softmax(out[:,0:u_action_dim], dim=1)
         on_gpu = next(self.parameters()).is_cuda
         if sample:

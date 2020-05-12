@@ -206,13 +206,14 @@ class MultiAgentEnv(gym.Env):
             action = action[1:]
 
         # rotation action
-        if action[0] == 1: agent.action.r = -np.pi/36
-        if action[0] == 2: agent.action.r = +np.pi/36
+        rotation_encoding = action[0]
+        if np.abs(rotation_encoding[0] - 1) < 1e-5: agent.action.r = -np.pi/36
+        if np.abs(rotation_encoding[1] - 1) < 1e-5: agent.action.r = +np.pi/36
         # agent.action.r = action[0]
         action = action[1:]
 
         # audio action
-        # TODO: all action are discrete, thus only has one dimension
+        # TODO: it is one-hot, so only one 1, but can be multiple zeros, so should be np.abs(audio_encoding[0] - 1)
         audio_encoding = action[0]
         if np.abs(audio_encoding[0] - 0) < 1e-5: agent.action.audio = None
         if np.abs(audio_encoding[1] - 0) < 1e-5: agent.action.audio = AudioAction.HandsUp
