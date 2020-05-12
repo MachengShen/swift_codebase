@@ -215,9 +215,9 @@ class MultiAgentEnv(gym.Env):
         # audio action
         # TODO: it is one-hot, so only one 1, but can be multiple zeros, so should be np.abs(audio_encoding[0] - 1)
         audio_encoding = action[0]
-        if np.abs(audio_encoding[0] - 0) < 1e-5: agent.action.audio = None
-        if np.abs(audio_encoding[1] - 0) < 1e-5: agent.action.audio = AudioAction.HandsUp
-        if np.abs(audio_encoding[2] - 0) < 1e-5: agent.action.audio = AudioAction.Freeze
+        if np.abs(audio_encoding[0] - 1) < 1e-5: agent.action.audio = None
+        if np.abs(audio_encoding[1] - 1) < 1e-5: agent.action.audio = AudioAction.HandsUp
+        if np.abs(audio_encoding[2] - 1) < 1e-5: agent.action.audio = AudioAction.Freeze
 
         action = action[1:]
 
