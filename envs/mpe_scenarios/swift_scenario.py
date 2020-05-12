@@ -3,11 +3,7 @@ from multiagent.core import World, Agent, Wall, Entity
 from multiagent.scenario import BaseScenario
 from enum import Enum, unique
 from multiagent.utils import Point, doIntersect
-
-@unique
-class AudioAction(Enum):
-	HandsUp = 1
-	Freeze = 2
+from multiagent.environment import AudioAction
 
 @unique
 class AudioResponse(Enum):

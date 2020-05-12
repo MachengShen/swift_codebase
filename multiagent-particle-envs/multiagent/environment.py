@@ -2,6 +2,12 @@ import gym
 from gym import spaces
 from gym.envs.registration import EnvSpec
 import numpy as np
+from enum import Enum, unique
+
+@unique
+class AudioAction(Enum):
+	HandsUp = 1
+	Freeze = 2
 
 # environment for all agents in the multiagent world
 # currently code assumes that no agents will be created/destroyed at runtime!
@@ -205,9 +211,11 @@ class MultiAgentEnv(gym.Env):
         action = action[1:]
 
         # audio action
-        agent.action.audio = action[0]
-        # 0: doing nothing; 1: hands up; 2: freeze
-        if action[0] == 0: agent.action.audio = None
+        audio_encoding = action[0]
+        if np.abs(audio_encoding[0] - 0) < 1e-5: agent.action.audio = None
+        if np.abs(audio_encoding[1] - 0) < 1e-5: agent.action.audio = AudioAction.HandsUp
+        if np.abs(audio_encoding[2] - 0) < 1e-5: agent.action.audio = AudioAction.Freeze
+
         action = action[1:]
 
         # make sure we used all elements of action
