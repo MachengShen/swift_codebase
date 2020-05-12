@@ -67,10 +67,8 @@ class DiscretePolicy(BasePolicy):
             int_act, act_u = categorical_sample(probs_u, use_cuda=on_gpu)
         else:
             act_u = onehot_from_logits(probs_u)
-        rets = [act_u]
 
-        action_r = out[:, u_action_dim]
-        rets.append(action_r)
+        action_r = out[:, u_action_dim].view(-1, 1)
 
         probs_audio = F.softmax(out[:, u_action_dim+1:], dim=1)
         # on_gpu = next(self.parameters()).is_cuda
@@ -78,12 +76,7 @@ class DiscretePolicy(BasePolicy):
             _, act_audio = categorical_sample(probs_audio, use_cuda=on_gpu)
         else:
             act_audio = onehot_from_logits(probs_audio)
-        rets.append(act_audio)
-
-
-        if len(rets) == 1:
-            return rets[0]
-        return rets
+        return torch.cat([act_u, action_r, act_audio], dim=1)
 
 
         # probs = F.softmax(out, dim=1)
