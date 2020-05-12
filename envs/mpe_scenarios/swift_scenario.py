@@ -124,8 +124,8 @@ class CellState(Enum):
 	ExploredHasAgent = 3
 
 CELL_STATE_ENCODING = {CellState.Unexplored: np.array([1, 0, 0]),
-					   CellState.Unexplored: np.array([0, 1, 0]),
-					   CellState.Unexplored: np.array([0, 0, 1])
+					   CellState.ExploredNoAgent: np.array([0, 1, 0]),
+					   CellState.ExploredHasAgent: np.array([0, 0, 1])
 					   }
 
 class Room_cell(object):
@@ -269,8 +269,12 @@ class FieldOfView(object):
 		self._sensing_range = sensing_range
 		self._attached_agent = attached_agent
 
-	def check_within_fov(self, p): #check if a point p is within fov
+	def check_within_fov(self, p_in): #check if a point p is within fov
 		#input p 2x1 numpy array
+		if isinstance(p_in, Point):
+			p = np.array([p_in.x, p_in.y])
+		else:
+			p = p_in
 		vector1 = np.subtract(p, self._attached_agent.state.p_pos)
 		#TODO: boresight definition?
 		vector2 = np.array([np.cos(self._attached_agent.state.boresight), np.sin(self._attached_agent.state.boresight)]).squeeze()
