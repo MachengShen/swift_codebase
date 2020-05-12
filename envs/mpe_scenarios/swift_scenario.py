@@ -191,7 +191,7 @@ class Room_cell(object):
 	def add_agent(self, agent: DummyAgent):
 		assert not self.has_agent()
 		self._occupant_agent = agent
-		self._occupant_agent.state.p_pos = self._center
+		self._occupant_agent.state.p_pos = np.array([self._center.x, self._center.y])
 
 	def reset_cell_states(self):
 		#remove occupant agent and set cell state to unexplored, and cell belief to 0.5
