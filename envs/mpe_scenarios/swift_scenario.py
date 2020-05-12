@@ -44,7 +44,7 @@ class SwiftWorld(World):
 			assert audio == AudioAction.HandsUp, "error"
 			return 0.3 * (belief - BELIEF_THRES)
 
-		audio_rew = 0.0
+		audio_rew = np.array([0.0])
 		#TODO: make sure each time step, this function has been called once and only once
 		#TODO: should modify environment._step()
 		self.record_old_belief()
@@ -75,7 +75,7 @@ class SwiftWorld(World):
 
 		rew = explore_cell_rew + belief_update_rew + audio_rew
 
-		return rew
+		return rew[0]
 
 class DummyAgent(Entity):
 	#super class of red and grey agent that use pre-defined policies

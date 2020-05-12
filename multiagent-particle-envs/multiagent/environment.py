@@ -113,8 +113,8 @@ class MultiAgentEnv(gym.Env):
             done_n.append(self._get_done(agent))
             info_n['n'].append(self._get_info(agent))
         # all agents get total reward in cooperative case
-        if self.shared_reward:
-            reward_n = [reward] * self.n
+        #if self.shared_reward:
+        reward_n = [reward] * self.n
         if self.post_step_callback is not None:
             self.post_step_callback(self.world)
         return obs_n, reward_n, done_n, info_n
