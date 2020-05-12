@@ -214,6 +214,15 @@ class Room_window(object):
 		#list of two np arrays contain the two end_points of the window
 		self.p1 = p1
 		self.p2 = p2
+		if p1.x == p2.x:
+			wall_orient = 'V'
+			wall_axis_pos = p1.x
+			endpoints = (p1.y, p2.y)
+		if p1.y == p2.y:
+			wall_orient = 'H'
+			wall_axis_pos = p1.y
+			endpoints = (p1.x, p2.x)
+		self.walls = Wall(orient=wall_orient, axis_pos=wall_axis_pos, endpoints=endpoints)
 
 class Room(object):
 	def __init__(self, center: Point, x_scale, y_scale):
