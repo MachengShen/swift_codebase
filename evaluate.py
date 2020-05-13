@@ -44,8 +44,8 @@ def run(config):
     curr_run = 'run%i' % run_num
     run_dir = model_dir / curr_run
     log_dir = run_dir / 'logs'
-    os.makedirs(log_dir)
-    logger = SummaryWriter(str(log_dir))
+    # os.makedirs(log_dir)
+    # logger = SummaryWriter(str(log_dir))
 
 #    torch.manual_seed(run_num)
 #    np.random.seed(run_num)
@@ -61,7 +61,7 @@ def run(config):
                                        attend_heads=config.attend_heads,
                                        reward_scale=config.reward_scale)
 
-    model.init_from_save_self('./models/swift_scenario/model/run1/model.pt')
+    model.init_from_save_self('./models/swift_scenario/model/run2/model.pt')
     replay_buffer = ReplayBuffer(config.buffer_length, model.nagents,
                                  [obsp.shape[0] for obsp in env.observation_space],
                                  [acsp.shape[0] if isinstance(acsp, Box) else acsp.n
@@ -88,6 +88,9 @@ def run(config):
             agent_actions = [ac.data.numpy().squeeze() for ac in torch_agent_actions]
             # rearrange actions to be per environment
             # actions = [[ac[i] for ac in agent_actions] for i in range(config.n_rollout_threads)]
+            # agent_actions[0][5]=1
+            # agent_actions[1][5]=1
+            # agent_actions[2][5]=1
             next_obs, rewards, dones, infos = env.step(agent_actions)
             env.render()
             time.sleep(0.1)

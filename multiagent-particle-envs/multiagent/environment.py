@@ -211,8 +211,8 @@ class MultiAgentEnv(gym.Env):
         # rotation_encoding = action_current[self.world.dim_p * 2 + 1:self.world.dim_p * 2 + 1+self.world.dim_rotation]
         rotation_encoding = action[0]
         agent.action.r = 0
-        if np.abs(rotation_encoding[0] - 1) < 1e-5: agent.action.r = -np.pi/36
-        if np.abs(rotation_encoding[1] - 1) < 1e-5: agent.action.r = +np.pi/36
+        if np.abs(rotation_encoding[0] - 1) < 1e-5: agent.action.r = -np.pi/2
+        if np.abs(rotation_encoding[1] - 1) < 1e-5: agent.action.r = +np.pi/2
         # agent.action.r = action[0]
         action = action[1:]
 
