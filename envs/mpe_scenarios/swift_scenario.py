@@ -197,7 +197,8 @@ class Room_cell(object):
 		#this method is called if and only if this cell has been observed by blue
 		if self.has_agent():
 			self._cell_state = CellState.ExploredHasAgent
-		self._cell_state = CellState.ExploredNoAgent
+		else:
+			self._cell_state = CellState.ExploredNoAgent
 
 	def update_cell_belief_upon_audio(self, audio: AudioAction):
 		if not audio: #audio is None, agent does not take audio action
