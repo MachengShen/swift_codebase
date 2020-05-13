@@ -303,30 +303,14 @@ class MultiAgentEnv(gym.Env):
                 self.render_geoms_xform.append(xform)
                 self.comm_geoms.append(entity_comm_geoms)
 
+            fov_hald_angle = self.world.agents[0].FOV.half_view_angle
+            sensing_range = self.world.agents[0].FOV.sensing_range
+            n_segment = 10
+            delta_angle = 2 * fov_hald_angle / n_segment
+            corners_FOV = ((0, 0), *[(sensing_range * np.cos(-fov_hald_angle + delta_angle * i),
+                                      sensing_range * np.sin(-fov_hald_angle + delta_angle * i)) for i in range(n_segment + 1)])
+
             for entity in self.world.agents:
-            #     # entity.state.boresight
-            #     # entity.FOV.half_view_angle
-            #     # entity.FOV.sensing_range
-                """
-                corners_FOV = ((entity.state.p_pos[0], entity.state.p_pos[1]),
-                               (entity.state.p_pos[0] + entity.FOV.sensing_range * np.cos(
-                                   entity.state.boresight - entity.FOV.half_view_angle),
-                                entity.state.p_pos[1] + entity.FOV.sensing_range * np.sin(
-                                    entity.state.boresight - entity.FOV.half_view_angle)),
-                               (entity.state.p_pos[0] + entity.FOV.sensing_range * np.cos(
-                                   entity.state.boresight + entity.FOV.half_view_angle),
-                                entity.state.p_pos[1] + entity.FOV.sensing_range * np.sin(
-                                    entity.state.boresight + entity.FOV.half_view_angle)))
-                """
-                corners_FOV = ((0, 0),
-                               (0 + entity.FOV.sensing_range * np.cos(
-                                - entity.FOV.half_view_angle),
-                                 entity.FOV.sensing_range * np.sin(
-                                - entity.FOV.half_view_angle)),
-                               (entity.FOV.sensing_range * np.cos(
-                                entity.FOV.half_view_angle),
-                                entity.FOV.sensing_range * np.sin(
-                                entity.FOV.half_view_angle)))
                 geom_FOV = rendering.make_polygon(corners_FOV)
                 geom_FOV.set_color(*entity.FOV.color, alpha=0.5)
                 xform = rendering.Transform()
@@ -360,7 +344,7 @@ class MultiAgentEnv(gym.Env):
         for i in range(len(self.viewers)):
             from multiagent import rendering
             # update bounds to center around agent
-            cam_range = 1
+            cam_range = 1.5
             if self.shared_viewer:
                 pos = np.zeros(self.world.dim_p)
             else:
