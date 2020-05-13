@@ -320,6 +320,8 @@ class FieldOfView(object):
 		else:
 			p = p_in
 		vector1 = np.subtract(p, self._attached_agent.state.p_pos)
+		if np.linalg.norm(vector1) > self.sensing_range:
+			return False
 		#TODO: boresight definition?
 		vector2 = np.array([np.cos(self._attached_agent.state.boresight), np.sin(self._attached_agent.state.boresight)]).squeeze()
 		return True if np.inner(vector1, vector2)/np.linalg.norm(vector1) >= np.cos(self._half_view_angle) else False
