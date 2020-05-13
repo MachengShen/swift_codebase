@@ -303,10 +303,14 @@ class Room(object):
 
 class FieldOfView(object):
 	#blue agent filed of view
-	def __init__(self, attached_agent, half_view_angle=np.pi/3, sensing_range=0.2):
+	def __init__(self, attached_agent, half_view_angle=np.pi/4, sensing_range=0.5):
 		self._half_view_angle = half_view_angle
 		self._sensing_range = sensing_range
 		self._attached_agent = attached_agent
+		self.color = np.array([1, 0.6, 0.1])
+
+		self.half_view_angle = half_view_angle
+		self.sensing_range = sensing_range
 
 	def check_within_fov(self, p_in): #check if a point p is within fov
 		#input p 2x1 numpy array
@@ -329,6 +333,7 @@ class BlueAgent(Agent):
 		self.silent = True
 		self.size = 0.15
 		self.color = np.array([0.35, 0.35, 0.85])
+		self.BlueAgent = True
 
 	def check_within_fov(self, p):
 		return self.FOV.check_within_fov(p)
