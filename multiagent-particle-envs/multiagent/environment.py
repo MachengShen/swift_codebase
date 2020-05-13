@@ -302,6 +302,38 @@ class MultiAgentEnv(gym.Env):
                 self.render_geoms.append(geom)
                 self.render_geoms_xform.append(xform)
                 self.comm_geoms.append(entity_comm_geoms)
+
+            for entity in self.world.agents:
+            #     # entity.state.boresight
+            #     # entity.FOV.half_view_angle
+            #     # entity.FOV.sensing_range
+                """
+                corners_FOV = ((entity.state.p_pos[0], entity.state.p_pos[1]),
+                               (entity.state.p_pos[0] + entity.FOV.sensing_range * np.cos(
+                                   entity.state.boresight - entity.FOV.half_view_angle),
+                                entity.state.p_pos[1] + entity.FOV.sensing_range * np.sin(
+                                    entity.state.boresight - entity.FOV.half_view_angle)),
+                               (entity.state.p_pos[0] + entity.FOV.sensing_range * np.cos(
+                                   entity.state.boresight + entity.FOV.half_view_angle),
+                                entity.state.p_pos[1] + entity.FOV.sensing_range * np.sin(
+                                    entity.state.boresight + entity.FOV.half_view_angle)))
+                """
+                corners_FOV = ((0, 0),
+                               (0 + entity.FOV.sensing_range * np.cos(
+                                - entity.FOV.half_view_angle),
+                                 entity.FOV.sensing_range * np.sin(
+                                - entity.FOV.half_view_angle)),
+                               (entity.FOV.sensing_range * np.cos(
+                                entity.FOV.half_view_angle),
+                                entity.FOV.sensing_range * np.sin(
+                                entity.FOV.half_view_angle)))
+                geom_FOV = rendering.make_polygon(corners_FOV)
+                geom_FOV.set_color(*entity.FOV.color, alpha=0.5)
+                xform = rendering.Transform()
+                geom_FOV.add_attr(xform)
+                self.render_geoms_xform.append(xform)
+                self.render_geoms.append(geom_FOV)
+
             for wall in self.world.walls:
                 corners = ((wall.axis_pos - 0.5 * wall.width, wall.endpoints[0]),
                            (wall.axis_pos - 0.5 * wall.width, wall.endpoints[1]),
@@ -315,27 +347,6 @@ class MultiAgentEnv(gym.Env):
                 else:
                     geom.set_color(*wall.color, alpha=0.5)
                 self.render_geoms.append(geom)
-
-            # self.render_geoms_xform_FOV = []
-            # for entity in self.world.agents:
-            #     # entity.state.boresight
-            #     # entity.FOV.half_view_angle
-            #     # entity.FOV.sensing_range
-            #     corners_FOV = ((entity.state.p_pos[0], entity.state.p_pos[1]),
-            #                    (entity.state.p_pos[0] + entity.FOV.sensing_range * np.cos(
-            #                        entity.state.boresight - entity.FOV.half_view_angle),
-            #                     entity.state.p_pos[1] + entity.FOV.sensing_range * np.sin(
-            #                         entity.state.boresight - entity.FOV.half_view_angle)),
-            #                    (entity.state.p_pos[0] + entity.FOV.sensing_range * np.cos(
-            #                        entity.state.boresight + entity.FOV.half_view_angle),
-            #                     entity.state.p_pos[1] + entity.FOV.sensing_range * np.sin(
-            #                         entity.state.boresight + entity.FOV.half_view_angle)))
-            #     geom_FOV = rendering.make_polygon(corners_FOV)
-            #     geom_FOV.set_color(*entity.FOV.color)
-            #     geom_FOV.add_attr(xform)
-            #     self.render_geoms_xform_FOV.append(xform)
-            #     self.render_geoms.append(geom_FOV)
-
             # add geoms to viewer
             for viewer in self.viewers:
                 viewer.geoms = []
@@ -367,8 +378,10 @@ class MultiAgentEnv(gym.Env):
                 else:
                     self.render_geoms[e].set_color(*entity.color)
 
-            # for e, entity in enumerate(self.world.agents):
-            #     self.render_geoms_xform_FOV[e].set_translation(*entity.state.p_pos)
+            for e, entity in enumerate(self.world.agents):
+                ind = e + len(self.world.entities)
+                self.render_geoms_xform[ind].set_translation(*entity.state.p_pos)
+                self.render_geoms_xform[ind].set_rotation(entity.state.boresight)
             # render to display or array
             results.append(self.viewers[i].render(return_rgb_array = mode=='rgb_array'))
 

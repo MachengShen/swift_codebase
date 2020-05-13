@@ -10,7 +10,7 @@ from utils.make_env import make_env
 from utils.buffer import ReplayBuffer
 from utils.env_wrappers import SubprocVecEnv, DummyVecEnv
 from algorithms.attention_sac import AttentionSAC
-
+import time
 BENCHMARK = True
 
 """
@@ -90,6 +90,8 @@ def run(config):
             # actions = [[ac[i] for ac in agent_actions] for i in range(config.n_rollout_threads)]
             next_obs, rewards, dones, infos = env.step(agent_actions)
             env.render()
+            time.sleep(0.1)
+
 
             # # # get actions as torch Variables
             # torch_agent_actions = model.step(torch_obs, explore=True)
