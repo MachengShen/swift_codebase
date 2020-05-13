@@ -253,7 +253,7 @@ class Room_window(object):
 			wall_axis_pos = p1.y
 			endpoints = (p1.x, p2.x)
 		self.wall = Wall(orient=wall_orient, axis_pos=wall_axis_pos, endpoints=endpoints)
-		self.wall.color = np.array([1, 1, 1])
+		self.wall.color = np.array([0,0.9,0.3])
 
 class Room(object):
 	def __init__(self, center: Point, x_scale, y_scale):
@@ -304,10 +304,14 @@ class Room(object):
 
 class FieldOfView(object):
 	#blue agent filed of view
-	def __init__(self, attached_agent, half_view_angle=np.pi/3, sensing_range=0.2):
+	def __init__(self, attached_agent, half_view_angle=np.pi/4, sensing_range=0.5):
 		self._half_view_angle = half_view_angle
 		self._sensing_range = sensing_range
 		self._attached_agent = attached_agent
+		self.color = np.array([1, 0.6, 0.1])
+
+		self.half_view_angle = half_view_angle
+		self.sensing_range = sensing_range
 
 	def check_within_fov(self, p_in): #check if a point p is within fov
 		#input p 2x1 numpy array
@@ -330,6 +334,7 @@ class BlueAgent(Agent):
 		self.silent = True
 		self.size = 0.15
 		self.color = np.array([0.35, 0.35, 0.85])
+		self.BlueAgent = True
 
 	def check_within_fov(self, p):
 		return self.FOV.check_within_fov(p)
@@ -361,8 +366,9 @@ class Scenario(BaseScenario):
 		world.dummy_agents += [GreyAgent() for i in range(num_grey)]
 
 		self._set_rooms(world, num_room, arena_size)
-		self._set_walls(world, num_room, arena_size)
+
 		self._set_room_windows(world, num_room, arena_size=arena_size)
+		self._set_walls(world, num_room, arena_size)
 
 		self.reset_world(world)  #reset_world also reset agents
 
@@ -389,6 +395,8 @@ class Scenario(BaseScenario):
 		wall_endpoints.append((arena_size/2, arena_size/2-length))
 
 		world.walls = [Wall(orient=wall_orient[i], axis_pos=wall_axis_pos[i], endpoints=wall_endpoints[i]) for i in range(num_wall)]
+		for room in world.rooms:
+			world.walls.append(room.window.wall)
 
 	def _set_rooms(self, world, num_room, arena_size=2):
 		length = arena_size / num_room
@@ -402,6 +410,7 @@ class Scenario(BaseScenario):
 		for i, room in enumerate(world.rooms):
 			room.window = Room_window(p1=Point(np.array([-arena_size/2 + length*i + window_length, arena_size/2-length])),
 										  p2=Point(np.array([-arena_size/2 + length*(i+1), arena_size/2-length])))
+
 
 	def _reset_blue_states(self, world):
 		# raise NotImplementedError
