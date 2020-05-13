@@ -88,6 +88,9 @@ def run(config):
             agent_actions = [ac.data.numpy().squeeze() for ac in torch_agent_actions]
             # rearrange actions to be per environment
             # actions = [[ac[i] for ac in agent_actions] for i in range(config.n_rollout_threads)]
+            # agent_actions[0][5]=1
+            # agent_actions[1][5]=1
+            # agent_actions[2][5]=1
             next_obs, rewards, dones, infos = env.step(agent_actions)
             env.render()
             time.sleep(0.1)
