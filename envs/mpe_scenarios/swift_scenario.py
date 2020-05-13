@@ -406,6 +406,16 @@ class Scenario(BaseScenario):
 		for room in world.rooms:
 			world.walls.append(room.window.wall)
 
+
+		boundary_wall_orient = 'VHV'
+		boundary_wall_axis_pos = np.array([-arena_size/2, -arena_size/2, arena_size/2])
+		boundary_wall_endpoints = []
+		boundary_wall_endpoints.append((-arena_size/2, arena_size/2 - length))
+		boundary_wall_endpoints.append((-arena_size / 2, arena_size / 2))
+		boundary_wall_endpoints.append((-arena_size / 2, arena_size / 2 - length))
+		for i in range(len(boundary_wall_orient)):
+			world.walls.append(Wall(orient=boundary_wall_orient[i], axis_pos=boundary_wall_axis_pos[i], endpoints=boundary_wall_endpoints[i]))
+
 	def _set_rooms(self, world, num_room, arena_size=2):
 		length = arena_size / num_room
 		room_centers = np.array([[-arena_size/2 + length/2 + i * length, arena_size/2 - length/2] for i in range(num_room)])
