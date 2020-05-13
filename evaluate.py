@@ -82,24 +82,22 @@ def run(config):
                                   requires_grad=False)
                          for i in range(model.nagents)]
 
-
             # get actions as torch Variables
-            # torch_agent_actions = model.step(torch_obs, explore=False, time=et_i)
             torch_agent_actions = model.step(torch_obs, explore=False)
             # convert actions to numpy arrays
             agent_actions = [ac.data.numpy().squeeze() for ac in torch_agent_actions]
             # rearrange actions to be per environment
-            actions = [[ac[i] for ac in agent_actions] for i in range(config.n_rollout_threads)]
+            # actions = [[ac[i] for ac in agent_actions] for i in range(config.n_rollout_threads)]
             next_obs, rewards, dones, infos = env.step(agent_actions)
             env.render()
 
-            # # get actions as torch Variables
-            # torch_agent_actions = model.step(torch_obs, explore=False)
+            # # # get actions as torch Variables
+            # torch_agent_actions = model.step(torch_obs, explore=True)
             # # convert actions to numpy arrays
             # agent_actions = [ac.data.numpy() for ac in torch_agent_actions]
             # # rearrange actions to be per environment
-            # # actions = [[ac[i] for ac in agent_actions] for i in range(config.n_rollout_threads)]
-            # next_obs, rewards, dones, infos = env.step(agent_actions)
+            # actions = [[ac[i] for ac in agent_actions] for i in range(config.n_rollout_threads)]
+            # next_obs, rewards, dones, infos = env.step(actions)
             # env.render()
 
 
