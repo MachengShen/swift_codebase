@@ -24,11 +24,14 @@ class SwiftWolrdStat(object):
 					num_dummy_agents += 1
 		beliefs = np.array([room.get_cell_beliefs() for room in self.world.rooms]).flatten()
 		max_belief, min_belief = np.max(beliefs), np.min(beliefs)
-		return {'num_room_explored': num_room_explored,
-				'num_dummy_agents': num_dummy_agents,
-				'max_belief': max_belief,
-				'min_belief': min_belief
-				}
+		stat_dict = {'num_room_explored': num_room_explored,
+					'num_dummy_agents': num_dummy_agents,
+					'max_belief': max_belief,
+					'min_belief': min_belief
+					}
+		if self.world._cached_fov:
+			stat_dict['num_room_within_fov'] = self.world._cached_fov
+		return stat_dict
 
 
 @unique
@@ -45,6 +48,7 @@ class SwiftWorld(World):
 		self.old_belief = None 					#old_belief records the belief of last step, used to calculate belief update reward
 		self.old_cell_state_binary = None     			#old_cell_state records boolean, explored or not
 		self.stat = None
+		self._cached_fov = None
 
 	def get_stats(self):
 		return self.stat.get_stats()
@@ -78,6 +82,7 @@ class SwiftWorld(World):
 		#TODO: should modify environment._step()
 		self.record_old_belief()
 		self.record_old_cell_state_binary()  #record if cell has been explored or not
+		num_room_within_fov = 0
 		for agent in self.agents:
 			if agent.action.audio: #audio is not None
 				audio_rew -= 0.1 	#penalize audio action
@@ -85,6 +90,7 @@ class SwiftWorld(World):
 				for cell in room.cells:
 					cell_center = cell.get_cell_center()
 					if agent.check_within_fov(cell_center) and doIntersect(cell_center, Point(agent.state.p_pos), room.window.p1, room.window.p2):
+						num_room_within_fov += 1
 						cell.update_cell_state_once_observed()
 						if cell.has_agent():
 							cell.update_cell_belief_upon_audio(agent.action.audio)
@@ -92,18 +98,18 @@ class SwiftWorld(World):
 
 						#TODO: make sure agent.action has audio attribute
 						#TODO: should also add audio action reward
-
+		self._cached_fov = num_room_within_fov
 		current_cell_state_binary = np.array([room.get_cell_states_binary() for room in self.rooms]).flatten()
 		old_cell_state_binary = self.old_cell_state_binary
-		explore_cell_rew = 0.2 * np.sum(current_cell_state_binary - old_cell_state_binary)
+		explore_cell_rew = 0.5 * np.sum(current_cell_state_binary - old_cell_state_binary)
 
 		current_belief = np.array([room.get_cell_beliefs() for room in self.rooms]).flatten()
 		old_belief = self.old_belief
 		delta_belief = np.abs(current_belief - old_belief)
-		belief_update_rew = 5.0 * np.sum(np.sqrt(delta_belief))
+		belief_update_rew = 10.0 * np.sum(np.sqrt(delta_belief))
 
-		rew = explore_cell_rew + belief_update_rew + audio_rew
-
+		fov_reward = 0.05 * num_room_within_fov
+		rew = explore_cell_rew + belief_update_rew + audio_rew + fov_reward
 		return rew[0]
 
 class DummyAgent(Entity):
@@ -244,11 +250,11 @@ class Room_window(object):
 		#list of two np arrays contain the two end_points of the window
 		self.p1 = p1
 		self.p2 = p2
-		if p1.x == p2.x:
+		if abs(p1.x - p2.x) < 1e-5:
 			wall_orient = 'V'
 			wall_axis_pos = p1.x
 			endpoints = (p1.y, p2.y)
-		if p1.y == p2.y:
+		if abs(p1.y - p2.y) < 1e-5:
 			wall_orient = 'H'
 			wall_axis_pos = p1.y
 			endpoints = (p1.x, p2.x)
@@ -469,9 +475,10 @@ class Scenario(BaseScenario):
 		for room in world.rooms:
 			for cell in room.cells:
 				cell_pos = np.array([cell._center.x, cell._center.y])
-				flag_1 = encode_boolean(agent.check_within_fov(cell_pos))
-				flag_2 = encode_boolean(doIntersect(Point(agent.state.p_pos), Point(cell_pos), room.window.p1, room.window.p2))
-				cell_info.extend([cell_pos, flag_1, flag_2, cell.get_cell_state_encoding(), cell.get_belief()])
+				flag_1 = agent.check_within_fov(cell_pos)
+				flag_2 = doIntersect(Point(agent.state.p_pos), Point(cell_pos), room.window.p1, room.window.p2)
+				fov_flag = encode_boolean(flag_1 and flag_2)
+				cell_info.extend([cell_pos, fov_flag, cell.get_cell_state_encoding(), cell.get_belief()])
 
 		return np.concatenate([agent.state.p_vel] + [agent.state.p_pos] + [agent.state.boresight] + other_pos + other_vel + other_heading + cell_info)
 
