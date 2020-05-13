@@ -82,7 +82,7 @@ class SwiftWorld(World):
 		#TODO: should modify environment._step()
 		self.record_old_belief()
 		self.record_old_cell_state_binary()  #record if cell has been explored or not
-		num_room_within_fov = 0
+		num_cell_within_fov = 0
 		for agent in self.agents:
 			if agent.action.audio: #audio is not None
 				audio_rew -= 0.1 	#penalize audio action
@@ -90,7 +90,7 @@ class SwiftWorld(World):
 				for cell in room.cells:
 					cell_center = cell.get_cell_center()
 					if agent.check_within_fov(cell_center) and doIntersect(cell_center, Point(agent.state.p_pos), room.window.p1, room.window.p2):
-						num_room_within_fov += 1
+						num_cell_within_fov += 1
 						cell.update_cell_state_once_observed()
 						if cell.has_agent():
 							cell.update_cell_belief_upon_audio(agent.action.audio)
@@ -98,7 +98,7 @@ class SwiftWorld(World):
 
 						#TODO: make sure agent.action has audio attribute
 						#TODO: should also add audio action reward
-		self._cached_fov = num_room_within_fov
+		self._cached_fov = num_cell_within_fov
 		current_cell_state_binary = np.array([room.get_cell_states_binary() for room in self.rooms]).flatten()
 		old_cell_state_binary = self.old_cell_state_binary
 		explore_cell_rew = 0.5 * np.sum(current_cell_state_binary - old_cell_state_binary)
@@ -108,7 +108,7 @@ class SwiftWorld(World):
 		delta_belief = np.abs(current_belief - old_belief)
 		belief_update_rew = 10.0 * np.sum(np.sqrt(delta_belief))
 
-		fov_reward = 0.05 * num_room_within_fov
+		fov_reward = 0.05 * num_cell_within_fov
 		rew = explore_cell_rew + belief_update_rew + audio_rew + fov_reward
 		return rew[0]
 
