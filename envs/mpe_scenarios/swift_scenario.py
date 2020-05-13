@@ -5,6 +5,32 @@ from enum import Enum, unique
 from multiagent.utils import Point, doIntersect
 from multiagent.environment import AudioAction
 
+class SwiftWolrdStat(object):
+	def __init__(self, world):
+		self.world = world
+
+	def get_stats(self):
+		# return a dictionary containing the following statistics for swift world
+		# num_room_explored: number of rooms that have been explored
+		# num_dummy_agents: number of dummy agents that have been found
+		# max_belief: the largest cell belief (should corresponds to red)
+		# min_belief: the smallest cell belief (should corresponds to grey)
+		num_room_explored = np.sum(np.array([room.get_cell_states_binary() for room in self.world.rooms]).flatten())
+		num_dummy_agents = 0
+		for room in self.world.rooms:
+			for cell in room.cells:
+				cell_state = cell.get_cell_state()
+				if cell_state == CellState.ExploredHasAgent:
+					num_dummy_agents += 1
+		beliefs = np.array([room.get_cell_beliefs() for room in self.world.rooms]).flatten()
+		max_belief, min_belief = np.max(beliefs), np.min(beliefs)
+		return {'num_room_explored': num_room_explored,
+				'num_dummy_agents': num_dummy_agents,
+				'max_belief': max_belief,
+				'min_belief': min_belief
+				}
+
+
 @unique
 class AudioResponse(Enum):
 	AgentHandsUp = 1
@@ -18,7 +44,10 @@ class SwiftWorld(World):
 		super(SwiftWorld, self).__init__()
 		self.old_belief = None 					#old_belief records the belief of last step, used to calculate belief update reward
 		self.old_cell_state_binary = None     			#old_cell_state records boolean, explored or not
-		#self._time = 0
+		self.stat = None
+
+	def get_stats(self):
+		return self.stat.get_stats()
 
 	def record_old_belief(self):
 		self.old_belief = np.array([room.get_cell_beliefs() for room in self.rooms]).flatten()
@@ -318,6 +347,7 @@ class Scenario(BaseScenario):
 		assert num_room >= num_grey + num_red, "must ensure each room only has less than 1 agent"
 
 		world = SwiftWorld()
+		world.stat = SwiftWolrdStat(world)
 		#self.agents contains only policy agents (blue agents)
 		world.agents = [BlueAgent() for i in range(num_blue)]
 		for i, agent in enumerate(world.agents):
