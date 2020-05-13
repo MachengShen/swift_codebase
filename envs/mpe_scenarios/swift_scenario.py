@@ -251,7 +251,8 @@ class Room_window(object):
 			wall_orient = 'H'
 			wall_axis_pos = p1.y
 			endpoints = (p1.x, p2.x)
-		self.walls = Wall(orient=wall_orient, axis_pos=wall_axis_pos, endpoints=endpoints)
+		self.wall = Wall(orient=wall_orient, axis_pos=wall_axis_pos, endpoints=endpoints)
+		self.wall.color = np.array([1, 1, 1])
 
 class Room(object):
 	def __init__(self, center: Point, x_scale, y_scale):
