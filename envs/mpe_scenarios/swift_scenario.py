@@ -304,7 +304,7 @@ class Room(object):
 
 class FieldOfView(object):
 	#blue agent filed of view
-	def __init__(self, attached_agent, half_view_angle=np.pi/4, sensing_range=0.5):
+	def __init__(self, attached_agent, half_view_angle=np.pi/4, sensing_range=1):
 		self._half_view_angle = half_view_angle
 		self._sensing_range = sensing_range
 		self._attached_agent = attached_agent
