@@ -29,7 +29,7 @@ class Action(object):
         self.audio = None
 
 class Wall(object):
-    def __init__(self, orient='H', axis_pos=0.0, endpoints=(-1, 1), width=0.1,
+    def __init__(self, orient='H', axis_pos=0.0, endpoints=(-1, 1), width=0.025,
                  hard=True):
         # orientation: 'H'orizontal or 'V'ertical
         self.orient = orient
@@ -72,7 +72,7 @@ class Entity(object):
         # state
         self.state = EntityState()
         # mass
-        self.initial_mass = 1.0
+        self.initial_mass = 0.1
 
     @property
     def mass(self):
@@ -122,12 +122,12 @@ class World(object):
         # color dimensionality
         self.dim_color = 3
         # simulation timestep
-        self.dt = 0.1
+        self.dt = 0.05
         # physical damping
         self.damping = 0.25
         # contact response parameters
         self.contact_force = 1e+2
-        self.contact_margin = 1e-3
+        self.contact_margin = 3e-2
         # cache distances between all agents (not calculated by default)
         self.cache_dists = False
         self.cached_dist_vect = None

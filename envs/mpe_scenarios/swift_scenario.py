@@ -101,14 +101,14 @@ class SwiftWorld(World):
 		self._cached_fov = num_cell_within_fov
 		current_cell_state_binary = np.array([room.get_cell_states_binary() for room in self.rooms]).flatten()
 		old_cell_state_binary = self.old_cell_state_binary
-		explore_cell_rew = 0.5 * np.sum(current_cell_state_binary - old_cell_state_binary)
+		explore_cell_rew = 1.5 * np.sum(current_cell_state_binary - old_cell_state_binary)
 
 		current_belief = np.array([room.get_cell_beliefs() for room in self.rooms]).flatten()
 		old_belief = self.old_belief
 		delta_belief = np.abs(current_belief - old_belief)
 		belief_update_rew = 10.0 * np.sum(np.sqrt(delta_belief))
 
-		fov_reward = 0.05 * num_cell_within_fov
+		fov_reward = 0.5 * num_cell_within_fov
 		rew = explore_cell_rew + belief_update_rew + audio_rew + fov_reward
 		return rew[0]
 
@@ -365,6 +365,9 @@ class Scenario(BaseScenario):
 		world.stat = SwiftWolrdStat(world)
 		#self.agents contains only policy agents (blue agents)
 		world.agents = [BlueAgent() for i in range(num_blue)]
+		for blue in world.agents:
+			blue.initial_mass = 0.2
+
 		for i, agent in enumerate(world.agents):
 			agent.name = 'agent %d' % i
 
@@ -439,6 +442,7 @@ class Scenario(BaseScenario):
 			agent.state.p_vel = np.zeros(world.dim_p)
 			agent.state.boresight = np.array([np.random.uniform(-np.pi, +np.pi)])
 			agent.state.c = np.zeros(world.dim_c)
+
 
 	def _permute_dummy_agents_index(self, world):
 		permuted_index = np.random.permutation(self.num_room)

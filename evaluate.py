@@ -93,7 +93,7 @@ def run(config):
             # agent_actions[2][5]=1
             next_obs, rewards, dones, infos = env.step(agent_actions)
             env.render()
-            time.sleep(0.1)
+            time.sleep(0.02)
 
 
             # # # get actions as torch Variables
