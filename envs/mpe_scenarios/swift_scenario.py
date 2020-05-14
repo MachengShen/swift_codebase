@@ -340,7 +340,7 @@ class BlueAgent(Agent):
 		self.silent = True
 		self.collide = True
 		self.silent = True
-		self.size = 0.15
+		self.size = 0.05
 		self.color = np.array([0.35, 0.35, 0.85])
 		self.BlueAgent = True
 

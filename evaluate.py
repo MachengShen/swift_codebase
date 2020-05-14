@@ -61,7 +61,7 @@ def run(config):
                                        attend_heads=config.attend_heads,
                                        reward_scale=config.reward_scale)
 
-    model.init_from_save_self('./models/swift_scenario/model/run2/model.pt')
+    model.init_from_save_self('./models/swift_scenario/model/run1/model.pt')
     replay_buffer = ReplayBuffer(config.buffer_length, model.nagents,
                                  [obsp.shape[0] for obsp in env.observation_space],
                                  [acsp.shape[0] if isinstance(acsp, Box) else acsp.n
