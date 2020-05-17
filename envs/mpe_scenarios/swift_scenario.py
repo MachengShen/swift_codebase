@@ -83,13 +83,17 @@ class SwiftWorld(World):
 		self.record_old_belief()
 		self.record_old_cell_state_binary()  #record if cell has been explored or not
 		num_cell_within_fov = 0
+
+		beliefs = np.array([room.get_cell_beliefs() for room in self.rooms]).flatten()
+		max_belief, min_belief = np.max(beliefs), np.min(beliefs)
+		print('max_belief is: ', max_belief, 'min_belief is: ', min_belief)
 		for i, agent in enumerate(self.agents):
-			"""
+
 			if agent.action.audio is None:
-				print("agent:", i, " audio: None")
+				print("agent:", i, "u", agent.action.u, "r" ,agent.action.r, " audio: None")
 			else:
 				print("agent:", i, " audio:", agent.action.audio)
-			"""
+
 			if agent.action.audio: #audio is not None
 				audio_rew -= 0.2 	#penalize audio action
 			for room in self.rooms:
