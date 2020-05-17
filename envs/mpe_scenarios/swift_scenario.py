@@ -39,8 +39,8 @@ class AudioResponse(Enum):
 	AgentHandsUp = 1
 	AgentFreeze = 2
 
-RedResponseProbMatrix = [[0.2, 0.8], [0.3, 0.7]]
-GreyResponseProbMatrix = [[0.7, 0.3], [0.8, 0.2]]
+RedResponseProbMatrix = [[0.2, 0.8], [0.65, 0.35]]
+GreyResponseProbMatrix = [[0.8, 0.2], [0.35, 0.65]]
 
 class SwiftWorld(World):
 	def __init__(self):
@@ -341,7 +341,6 @@ class FieldOfView(object):
 		vector1 = np.subtract(p, self._attached_agent.state.p_pos)
 		if np.linalg.norm(vector1) > self.sensing_range:
 			return False
-		#TODO: boresight definition?
 		vector2 = np.array([np.cos(self._attached_agent.state.boresight), np.sin(self._attached_agent.state.boresight)]).squeeze()
 		return True if np.inner(vector1, vector2)/np.linalg.norm(vector1) >= np.cos(self._half_view_angle) else False
 
