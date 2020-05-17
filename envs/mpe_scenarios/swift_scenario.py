@@ -73,9 +73,9 @@ class SwiftWorld(World):
 			if belief > BELIEF_THRES:
 				return 0.0
 			if audio == AudioAction.Freeze:
-				return 0.5 * (belief - BELIEF_THRES)
+				return np.max([- 0.5 * np.log(belief + 1e-8) * (belief - BELIEF_THRES), -5])
 			assert audio == AudioAction.HandsUp, "error"
-			return 1.0 * (belief - BELIEF_THRES)
+			return np.max([- 1.0 * np.log(belief + 1e-8) * (belief - BELIEF_THRES), -10])
 
 		audio_rew = np.array([0.0])
 		#TODO: make sure each time step, this function has been called once and only once
@@ -84,11 +84,12 @@ class SwiftWorld(World):
 		self.record_old_cell_state_binary()  #record if cell has been explored or not
 		num_cell_within_fov = 0
 		for i, agent in enumerate(self.agents):
+			"""
 			if agent.action.audio is None:
 				print("agent:", i, " audio: None")
 			else:
 				print("agent:", i, " audio:", agent.action.audio)
-
+			"""
 			if agent.action.audio: #audio is not None
 				audio_rew -= 0.2 	#penalize audio action
 			for room in self.rooms:
@@ -112,6 +113,9 @@ class SwiftWorld(World):
 		old_belief = self.old_belief
 		delta_belief = np.abs(current_belief - old_belief)
 		belief_update_rew = 10.0 * np.sum(np.sqrt(delta_belief))
+
+		print('belief_update_rew', belief_update_rew)
+		print('audio reward', audio_rew)
 
 		fov_reward = 0.5 * num_cell_within_fov
 		rew = explore_cell_rew + belief_update_rew + audio_rew + fov_reward
