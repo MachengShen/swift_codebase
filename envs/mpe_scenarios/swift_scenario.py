@@ -69,13 +69,13 @@ class SwiftWorld(World):
 			#specify the audio action reward on dummy agent
 			if not audio: #audio action is None
 				return 0.0
-			BELIEF_THRES = 0.3   #belief above which assign no penalty
+			BELIEF_THRES = 0.4   #belief above which assign no penalty
 			if belief > BELIEF_THRES:
 				return 0.0
 			if audio == AudioAction.Freeze:
-				return 0.1 * (belief - BELIEF_THRES)
+				return 0.5 * (belief - BELIEF_THRES)
 			assert audio == AudioAction.HandsUp, "error"
-			return 0.3 * (belief - BELIEF_THRES)
+			return 1.0 * (belief - BELIEF_THRES)
 
 		audio_rew = np.array([0.0])
 		#TODO: make sure each time step, this function has been called once and only once
@@ -90,7 +90,7 @@ class SwiftWorld(World):
 				print("agent:", i, " audio:", agent.action.audio)
 
 			if agent.action.audio: #audio is not None
-				audio_rew -= 0.1 	#penalize audio action
+				audio_rew -= 0.2 	#penalize audio action
 			for room in self.rooms:
 				for cell in room.cells:
 					cell_center = cell.get_cell_center()
