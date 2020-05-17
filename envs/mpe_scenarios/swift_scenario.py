@@ -114,8 +114,8 @@ class SwiftWorld(World):
 		delta_belief = np.abs(current_belief - old_belief)
 		belief_update_rew = 10.0 * np.sum(np.sqrt(delta_belief))
 
-		print('belief_update_rew', belief_update_rew)
-		print('audio reward', audio_rew)
+		# print('belief_update_rew', belief_update_rew)
+		# print('audio reward', audio_rew)
 
 		fov_reward = 0.5 * num_cell_within_fov
 		rew = explore_cell_rew + belief_update_rew + audio_rew + fov_reward
