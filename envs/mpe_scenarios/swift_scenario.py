@@ -83,7 +83,12 @@ class SwiftWorld(World):
 		self.record_old_belief()
 		self.record_old_cell_state_binary()  #record if cell has been explored or not
 		num_cell_within_fov = 0
-		for agent in self.agents:
+		for i, agent in enumerate(self.agents):
+			if agent.action.audio is None:
+				print("agent:", i, " audio: None")
+			else:
+				print("agent:", i, " audio:", agent.action.audio)
+
 			if agent.action.audio: #audio is not None
 				audio_rew -= 0.1 	#penalize audio action
 			for room in self.rooms:
@@ -333,15 +338,21 @@ class FieldOfView(object):
 		return True if np.inner(vector1, vector2)/np.linalg.norm(vector1) >= np.cos(self._half_view_angle) else False
 
 class BlueAgent(Agent):
-	def __init__(self):
+	def __init__(self, index):
 		super(BlueAgent, self).__init__()
 		# self.color = np.array([0.0, 0.0, 1.0])
+		self.index = index
 		self.FOV = FieldOfView(self)   #agent filed of view
 		self.silent = True
 		self.collide = True
 		self.silent = True
 		self.size = 0.05
-		self.color = np.array([0.35, 0.35, 0.85])
+		if index == 0:
+			self.color = np.array([1.0, 0.0, 0.0])
+		if index == 1:
+			self.color = np.array([0.0, 1.0, 0.0])
+		if index == 2:
+			self.color = np.array([0.0, 0.0, 1.0])
 		self.BlueAgent = True
 
 	def check_within_fov(self, p):
@@ -364,7 +375,7 @@ class Scenario(BaseScenario):
 		world = SwiftWorld()
 		world.stat = SwiftWolrdStat(world)
 		#self.agents contains only policy agents (blue agents)
-		world.agents = [BlueAgent() for i in range(num_blue)]
+		world.agents = [BlueAgent(i) for i in range(num_blue)]
 		for blue in world.agents:
 			blue.initial_mass = 0.2
 
