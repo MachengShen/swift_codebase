@@ -39,8 +39,12 @@ class AudioResponse(Enum):
 	AgentHandsUp = 1
 	AgentFreeze = 2
 
+
 RedResponseProbMatrix = [[0.2, 0.8], [0.65, 0.35]]
 GreyResponseProbMatrix = [[0.8, 0.2], [0.35, 0.65]]
+
+# RedResponseProbMatrix = [[0.1, 0.9], [0.9, 0.1]]
+# GreyResponseProbMatrix = [[0.8, 0.2], [0.5, 0.5]]
 
 class SwiftWorld(World):
 	def __init__(self):
@@ -85,21 +89,22 @@ class SwiftWorld(World):
 		num_cell_within_fov = 0
 
 		beliefs = np.array([room.get_cell_beliefs() for room in self.rooms]).flatten()
-		max_belief, min_belief = np.max(beliefs), np.min(beliefs)
-		print('max_belief is: ', max_belief, 'min_belief is: ', min_belief)
+		# max_belief, min_belief = np.max(beliefs), np.min(beliefs)
+		# print('max_belief is: ', max_belief, 'min_belief is: ', min_belief)
 		for i, agent in enumerate(self.agents):
 
-			if agent.action.audio is None:
-				print("agent:", i, "u", agent.action.u, "r" ,agent.action.r, " audio: None")
-			else:
-				print("agent:", i, " audio:", agent.action.audio)
+			# if agent.action.audio is None:
+			# 	# print("agent:", i, "u", agent.action.u, "r" ,agent.action.r, " audio: None")
+			# 	print("agent:", i, " audio: None")
+			# else:
+			# 	print("agent:", i, " audio:", agent.action.audio)
 
 			if agent.action.audio: #audio is not None
 				if agent.action.audio == AudioAction.HandsUp:
-					audio_rew -= 0.3 	#penalize audio action
+					audio_rew -= 0.1 	#penalize audio action
 				else:
 					assert agent.action.audio == AudioAction.Freeze
-					audio_rew -= 0.15
+					audio_rew -= 0.4
 			for room in self.rooms:
 				for cell in room.cells:
 					cell_center = cell.get_cell_center()
