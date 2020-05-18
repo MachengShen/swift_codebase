@@ -95,7 +95,11 @@ class SwiftWorld(World):
 				print("agent:", i, " audio:", agent.action.audio)
 
 			if agent.action.audio: #audio is not None
-				audio_rew -= 0.2 	#penalize audio action
+				if agent.action.audio == AudioAction.Freeze:
+					audio_rew -= 0.15 	#penalize audio action
+				else:
+					assert agent.action.audio == AudioAction.HandsUp
+					audio_rew -= 0.3
 			for room in self.rooms:
 				for cell in room.cells:
 					cell_center = cell.get_cell_center()
