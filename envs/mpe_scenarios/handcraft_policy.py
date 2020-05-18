@@ -43,8 +43,10 @@ def handcraft_policy(agent, world)->Action:
     for count, idx in enumerate(agent_list):
         if agent_index == idx:
             room = world.rooms[room_index[count]]
-            dy = room.center.y - agent.state.p_pos[1]
-            dx = room.center.x - agent.state.p_pos[0]
+            room_window_center = 0.5 * np.array([room.window.p1.x + room.window.p2.x,
+                                                 room.window.p1.y + room.window.p2.y])
+            dy = room_window_center[1] - agent.state.p_pos[1]
+            dx = room_window_center[0] - agent.state.p_pos[0]
             if np.abs(dy) > np.abs(dx):
                 if dy > 0:
                     translation_action[4] = 1
