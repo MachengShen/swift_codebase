@@ -354,7 +354,7 @@ class FieldOfView(object):
 		return True if np.inner(vector1, vector2)/np.linalg.norm(vector1) >= np.cos(self._half_view_angle) else False
 
 class BlueAgent(Agent):
-	def __init__(self, index):
+	def __init__(self, index, use_handcraft_policy=False):
 		super(BlueAgent, self).__init__()
 		# self.color = np.array([0.0, 0.0, 1.0])
 		self.index = index
@@ -370,12 +370,15 @@ class BlueAgent(Agent):
 		if index == 2:
 			self.color = np.array([0.0, 0.0, 1.0])
 		self.BlueAgent = True
+		if use_handcraft_policy:
+			from .handcraft_policy import handcraft_policy
+			self.action_callback = handcraft_policy
 
 	def check_within_fov(self, p):
 		return self.FOV.check_within_fov(p)
 
 class Scenario(BaseScenario):
-	def make_world(self):
+	def make_world(self, use_handcraft_policy=False):
 		num_blue = 3
 		num_red = 1
 		num_grey = 2
@@ -394,7 +397,7 @@ class Scenario(BaseScenario):
 
 		world.stat = SwiftWolrdStat(world)
 		#self.agents contains only policy agents (blue agents)
-		world.agents = [BlueAgent(i) for i in range(num_blue)]
+		world.agents = [BlueAgent(i, use_handcraft_policy=use_handcraft_policy) for i in range(num_blue)]
 		for blue in world.agents:
 			blue.initial_mass = 0.2
 
