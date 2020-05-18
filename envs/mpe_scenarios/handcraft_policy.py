@@ -1,4 +1,4 @@
-
+from .swift_scenario import CellState, AudioAction
 
 
 def handcraft_policy(agent, world):
@@ -39,11 +39,27 @@ def if_rotate():
     return index
 
 
-def get_audio_action():
+def get_audio_action(agent, world):
     # not in previous two lists
     # and an agent has a dummy agent within FOV
     # and belief is within a threshold
-    return 0
+    def _agent_near_window():   #this function should be compatible with the thredhold check in get_translate_agent_list()
+        raise NotImplementedError
+
+    for room in world.rooms:
+        if _agent_near_window(agent, room):
+            for cell in room.cells:
+                if not agent.check_within_fov(cell.get_cell_center()):
+                    continue
+                if cell.get_cell_state() == CellState.ExploredHasAgent:
+                    cell_belief = cell.get_belief()
+                    if cell_belief < 0.1 or cell_belief > 0.95:
+                        return None
+                    if cell_belief < 0.5:
+                        return AudioAction.Freeze
+                    else:
+                        return AudioAction.HandsUp
+    raise Exception("cannot find a valid action, check if there is any dummy agent within fov")
 
 # def get_audio_agent_list():
 #     # not in previous two lists
