@@ -1,7 +1,8 @@
 from .swift_scenario import CellState, AudioAction
+from multiagent.core import Action
 
 
-def handcraft_policy(agent, world):
+def handcraft_policy(agent, world)->Action:
     # action: one hot \in R^9, 0~4: translation; 5: rotation; 6~8: audio
     # TODO: as before, I can do translation and rotation; Macheng can do audio]
     # get_unexplored_room_index
@@ -14,10 +15,11 @@ def handcraft_policy(agent, world):
     # so far, agent is close to a certain window
     # if agent in agent_list: translate else rotate
 
+    action = Action()
 
 
 
-    action = []
+
     return action
 
 

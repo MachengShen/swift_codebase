@@ -50,7 +50,7 @@ def run(config):
 #    torch.manual_seed(run_num)
 #    np.random.seed(run_num)
     #env = make_parallel_env(, config.n_rollout_threads, run_num)
-    env = make_env(config.env_id, benchmark=BENCHMARK, discrete_action=True)
+    env = make_env(config.env_id, benchmark=BENCHMARK, discrete_action=True, use_handcraft_policy=config.use_handcraft_policy)
     model = AttentionSAC.init_from_env(env,
                                        tau=config.tau,
                                        pi_lr=config.pi_lr,
@@ -91,7 +91,7 @@ def run(config):
             # agent_actions[0][5]=1
             # agent_actions[1][5]=1
             # agent_actions[2][5]=1
-            next_obs, rewards, dones, infos = env.step(agent_actions)
+            next_obs, rewards, dones, infos = env.step(agent_actions, use_handcraft_policy=config.use_handcraft_policy)
             env.render()
             time.sleep(0.1)
 
@@ -184,6 +184,7 @@ if __name__ == '__main__':
     parser.add_argument("--gamma", default=0.99, type=float)
     parser.add_argument("--reward_scale", default=1., type=float)
     parser.add_argument("--use_gpu", action='store_true')
+    parser.add_argument("--use_handcraft_policy", action='store_true')
 
     config = parser.parse_args()
 

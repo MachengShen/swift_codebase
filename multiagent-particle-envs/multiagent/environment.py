@@ -94,15 +94,16 @@ class MultiAgentEnv(gym.Env):
         else:
             np.random.seed(seed)
 
-    def _step(self, action_n):
+    def _step(self, action_n, use_handcraft_policy=False):
         obs_n = []
         reward_n = []
         done_n = []
         info_n = {'n': []}
         self.agents = self.world.policy_agents
         # set action for each agent
-        for i, agent in enumerate(self.agents):
-            self._set_action(action_n[i], agent, self.action_space[i])
+        if not use_handcraft_policy:
+            for i, agent in enumerate(self.agents):
+                self._set_action(action_n[i], agent, self.action_space[i])
         # advance world state
         self.world.step()
         reward = self.world.step_belief()
