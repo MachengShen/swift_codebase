@@ -22,7 +22,7 @@ def handcraft_policy(agent, world)->Action:
 
     # so far, agent is close to a certain window
     # if agent in agent_list: translate else rotate
-
+    action = Action()
 
     dist_thres = world.arena_size / world.num_room / 4 / np.sqrt(2) * 2
 
@@ -30,6 +30,7 @@ def handcraft_policy(agent, world)->Action:
         get_translate_agent_list(agent, world, dist_thres)
 
     translation_action = np.zeros(5)
+    action.u = np.zeros((2, 2))
     if len(agent_list) > len(room_index):
         for i in range(len(agent_list) - len(room_index)):
             room_index.append(uncertainty_sort_index[i])
@@ -50,20 +51,30 @@ def handcraft_policy(agent, world)->Action:
             if np.abs(dy) > np.abs(dx):
                 if dy > 0:
                     translation_action[4] = 1
+                    # action.u = 4
                 else:
                     translation_action[3] = 1
+                    # action.u = 3
             else:
                 if dx > 0:
                     translation_action[2] = 1
+                    # action.u = 2
                 else:
                     translation_action[1] = 1
+                    # action.u = 1
+            action.u[0] = -(translation_action[1] - translation_action[2])
+            action.u[1] = -(translation_action[3] - translation_action[4])
             # if action[0] == 1: agent.action.u[0] = -1.0
             # if action[0] == 2: agent.action.u[0] = +1.0
             # if action[0] == 3: agent.action.u[1] = -1.0
             # if action[0] == 4: agent.action.u[1] = +1.0
+            # agent.action.u[0] += action[0][1] - action[0][2]
+            # agent.action.u[1] += action[0][3] - action[0][4]
     flag_rotate, rotate_action = if_rotate(agent, world, dist_thres)
+    action.r = rotate_action
     audio_action = get_audio_action()
-    action = np.concatenate([translation_action] + [rotate_action] + [audio_action])
+    action.audio = audio_action
+    # action = np.concatenate([translation_action] + [rotate_action] + [audio_action])
 
     # action = Action()
 
@@ -152,9 +163,11 @@ def if_rotate(agent, world, dist_thres):
         angle_to_room_center = np.pi + np.atan2(my_room.center.y - agent.state.p_pos[1],
                                         my_room.center.x - agent.state.p_pos[0])
         if agent.state.agent.state.boresight >= angle_to_room_center:
-            rotate_action = np.array([1, 0])
+            # rotate_action = np.array([1, 0])
+            rotate_action = -np.pi / 2
         else:
-            rotate_action = np.array([0, 1])
+            # rotate_action = np.array([0, 1])
+            rotate_action = np.pi / 2
     return flag_rotate, rotate_action
 
 
