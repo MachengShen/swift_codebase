@@ -362,7 +362,7 @@ class BlueAgent(Agent):
 		self.silent = True
 		self.collide = True
 		self.silent = True
-		self.size = 0.05
+		self.size = 0.015
 		if index == 0:
 			self.color = np.array([1.0, 0.0, 0.0])
 		if index == 1:
@@ -389,6 +389,9 @@ class Scenario(BaseScenario):
 		assert num_room >= num_grey + num_red, "must ensure each room only has less than 1 agent"
 
 		world = SwiftWorld()
+		world.arena_size = arena_size
+		world.num_room = num_room
+
 		world.stat = SwiftWolrdStat(world)
 		#self.agents contains only policy agents (blue agents)
 		world.agents = [BlueAgent(i) for i in range(num_blue)]
@@ -403,10 +406,10 @@ class Scenario(BaseScenario):
 		world.dummy_agents = [RedAgent() for i in range(num_red)]
 		world.dummy_agents += [GreyAgent() for i in range(num_grey)]
 
-		self._set_rooms(world, num_room, arena_size)
+		self._set_rooms(world, num_room, arena_size=arena_size)
 
 		self._set_room_windows(world, num_room, arena_size=arena_size)
-		self._set_walls(world, num_room, arena_size)
+		self._set_walls(world, num_room, arena_size=arena_size)
 
 		self.reset_world(world)  #reset_world also reset agents
 
@@ -427,7 +430,6 @@ class Scenario(BaseScenario):
 			wall_endpoints.append((arena_size/2, arena_size/2-length))
 			wall_endpoints.append((-arena_size/2 + length*i, -arena_size/2 + length*(i+1) - window_length))
 		#wall_orient[num_room-1] = 'V'
-		# TODO: chuangchuang check correctness of this line
 		# wall_orient = wall_orient[:num_room - 1] + 'V' + wall_orient[num_room:]
 		wall_axis_pos[num_wall-1] = arena_size/2
 		wall_endpoints.append((arena_size/2, arena_size/2-length))
@@ -446,13 +448,13 @@ class Scenario(BaseScenario):
 		for i in range(len(boundary_wall_orient)):
 			world.walls.append(Wall(orient=boundary_wall_orient[i], axis_pos=boundary_wall_axis_pos[i], endpoints=boundary_wall_endpoints[i]))
 
-	def _set_rooms(self, world, num_room, arena_size=2):
+	def _set_rooms(self, world, num_room, arena_size=2.0):
 		length = arena_size / num_room
 		room_centers = np.array([[-arena_size/2 + length/2 + i * length, arena_size/2 - length/2] for i in range(num_room)])
 		world.rooms = [Room(Point(room_centers[i, :]), length, length) for i in range(num_room)]
 		# raise NotImplementedError
 
-	def _set_room_windows(self, world, num_room, arena_size=2):
+	def _set_room_windows(self, world, num_room, arena_size=2.0):
 		length = arena_size / num_room
 		window_length = length / 2
 		for i, room in enumerate(world.rooms):
