@@ -94,7 +94,7 @@ class MultiAgentEnv(gym.Env):
         else:
             np.random.seed(seed)
 
-    def _step(self, action_n, use_handcraft_policy=False):
+    def step(self, action_n, use_handcraft_policy=False):
         obs_n = []
         reward_n = []
         done_n = []
