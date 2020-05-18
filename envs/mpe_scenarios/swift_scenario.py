@@ -456,7 +456,8 @@ class Scenario(BaseScenario):
 		for agent in world.agents:
 			agent.silent = True
 			agent.state.p_pos = np.random.uniform(-1, +1, world.dim_p)
-			if agent.state.p_pos[-1] > 0: agent.state.p_pos[-1] = 0
+			if agent.state.p_pos[1] > 0: agent.state.p_pos[1] = 0
+			if agent.state.p_pos[1] < -0.9: agent.state.p_pos[1] = -0.9
 			agent.state.p_vel = np.zeros(world.dim_p)
 			agent.state.boresight = np.array([np.random.uniform(-np.pi, +np.pi)])
 			agent.state.c = np.zeros(world.dim_c)
