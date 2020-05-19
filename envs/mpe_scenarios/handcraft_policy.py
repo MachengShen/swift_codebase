@@ -72,7 +72,7 @@ def handcraft_policy(agent, world)->Action:
             # agent.action.u[1] += action[0][3] - action[0][4]
     flag_rotate, rotate_action = if_rotate(agent, world, dist_thres)
     action.r = rotate_action
-    audio_action = get_audio_action(agent, world)
+    audio_action = get_audio_action(agent, world, dist_thres)
     action.audio = audio_action
     # action = np.concatenate([translation_action] + [rotate_action] + [audio_action])
 
@@ -171,15 +171,19 @@ def if_rotate(agent, world, dist_thres):
     return flag_rotate, rotate_action
 
 
-def get_audio_action(agent, world):
+def get_audio_action(agent, world, dist_thres):
     # not in previous two lists
     # and an agent has a dummy agent within FOV
     # and belief is within a threshold
-    def _agent_near_window():   #this function should be compatible with the thredhold check in get_translate_agent_list()
-        raise NotImplementedError
-
+    def _agent_near_window(agent, room, dist_thres):   #this function should be compatible with the thredhold check in get_translate_agent_list()
+        # raise NotImplementedError
+        flag = False
+        room_window_center = 0.5 * np.array([room.window.p1.x + room.window.p2.x,
+                                             room.window.p1.y + room.window.p2.y])
+        if np.linalg.norm(agent.state.p_pos - room_window_center) <= dist_thres:
+            flag = True
     for room in world.rooms:
-        if _agent_near_window(agent, room):
+        if _agent_near_window(agent, room, dist_thres):
             for cell in room.cells:
                 if not agent.check_within_fov(cell.get_cell_center()):
                     continue
