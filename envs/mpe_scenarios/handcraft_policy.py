@@ -24,7 +24,7 @@ def handcraft_policy(agent, world)->Action:
     # if agent in agent_list: translate else rotate
     action = Action()
 
-    dist_thres = world.arena_size / world.num_room / 4 / np.sqrt(2) * 2
+    dist_thres = world.arena_size / world.num_room / 4 / np.sqrt(2) /2
 
     agent_list, room_index, uncertainty_sort_index = \
         get_translate_agent_list(agent, world, dist_thres)
@@ -40,7 +40,7 @@ def handcraft_policy(agent, world)->Action:
             agent_index = i
             break
 
-
+    print(dist_thres, agent_index, agent_list)
     for count, idx in enumerate(agent_list):
         if agent_index == idx:
             room = world.rooms[room_index[count]]
