@@ -24,7 +24,7 @@ def handcraft_policy(agent, world)->Action:
     # if agent in agent_list: translate else rotate
     action = Action()
 
-    dist_thres = world.arena_size / world.num_room / 4 / np.sqrt(2) /2
+    dist_thres = world.arena_size / world.num_room / 4 / 0.2
 
     agent_list, room_index, uncertainty_sort_index = \
         get_translate_agent_list(agent, world, dist_thres)
@@ -46,8 +46,8 @@ def handcraft_policy(agent, world)->Action:
             room = world.rooms[room_index[count]]
             room_window_center = 0.5 * np.array([room.window.p1.x + room.window.p2.x,
                                                  room.window.p1.y + room.window.p2.y])
-            dy = room_window_center[1] - agent.state.p_pos[1]
-            dx = room_window_center[0] - agent.state.p_pos[0]
+            dy = room_window_center[1] - agent.state.p_pos[1] + 0.5
+            dx = room_window_center[0] - agent.state.p_pos[0] - 0.5
             if np.abs(dy) > np.abs(dx):
                 if dy > 0:
                     translation_action[4] = 1
@@ -64,8 +64,10 @@ def handcraft_policy(agent, world)->Action:
                     # action.u = 1
             action.u[0] = -(translation_action[1] - translation_action[2])
             action.u[1] = -(translation_action[3] - translation_action[4])
+            action.u = 1*action.u
             action.r = 0.0
             action.audio = None
+            print(action.u)
             return action
 
             # if action[0] == 1: agent.action.u[0] = -1.0
@@ -79,6 +81,7 @@ def handcraft_policy(agent, world)->Action:
         action.r = rotate_action
         action.u = np.array([0.0, 0.0])
         action.audio = None
+        print(action.r)
         return action
 
     audio_action = get_audio_action(agent, world, dist_thres)
@@ -104,13 +107,40 @@ def get_translate_agent_list(agent, world, dist_thres):
         return flag
 
     def if_agent_with_room(agent, world):
-        flag = False
+
         for room in world.rooms:
+            flag_all_cells_explored = True
+            flag_no_dummy_in_FOV = True
+            Room_has_agent = False
+
+            room_window_center = 0.5 * np.array([room.window.p1.x + room.window.p2.x,
+                                                 room.window.p1.y + room.window.p2.y])
+            if np.linalg.norm(agent.state.p_pos - room_window_center) <= dist_thres:
+                my_room = room
+                for cell in room.cells:
+                    # cell_center = cell.get_cell_center()
+                    # flag_see_the_cell = agent.check_within_fov(cell_center) \
+                    #                     and doIntersect(cell_center, Point(agent.state.p_pos), room.window.p1,
+                    #                                     room.window.p2)
+                    # if flag_see_the_cell and cell.has_agent():
+                    if cell.has_agent():
+                        flag_no_dummy_in_FOV = False
+                        Room_has_agent = True
+                    if cell.get_cell_state() == CellState.Unexplored:
+                        flag_all_cells_explored = False
+            # flag1 = flag_all_cells_explored and flag_no_dummy_in_FOV
+            flag1 = flag_all_cells_explored and not Room_has_agent
+            flag = False
+        # for room in world.rooms:
             room_window_center = 0.5 * np.array([room.window.p1.x + room.window.p2.x,
                                                  room.window.p1.y + room.window.p2.y])
             if np.linalg.norm(agent.state.p_pos - room_window_center) <= dist_thres:
                 flag = True
-                break
+                # break
+
+            if flag1:
+                flag = False
+            # if flag == True: break
         return flag
 
     def get_room_most_uncertain(world):
@@ -126,6 +156,7 @@ def get_translate_agent_list(agent, world, dist_thres):
     room_index = []
     for i, room in enumerate(world.rooms):
         for cell in room.cells:
+            # if cell.get_cell_state() != CellState.ExploredNoAgent and not if_room_with_agent(room, world):
             if cell.get_cell_state() != CellState.ExploredNoAgent and not if_room_with_agent(room, world):
                 room_index.append(i)
                 break
@@ -163,7 +194,7 @@ def if_rotate(agent, world, dist_thres):
         flag_rotate = True
     else:
         flag_rotate = False
-
+    print(flag_all_cells_explored,flag_no_dummy_in_FOV)
     # rotate_action = np.array([0, 0])
     rotate_action = 0
     if flag_rotate:
