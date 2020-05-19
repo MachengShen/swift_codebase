@@ -371,7 +371,7 @@ class BlueAgent(Agent):
 			self.color = np.array([0.0, 0.0, 1.0])
 		self.BlueAgent = True
 		if use_handcraft_policy:
-			from .handcraft_policy import handcraft_policy
+			from envs.mpe_scenarios.handcraft_policy import handcraft_policy
 			self.action_callback = handcraft_policy
 
 	def check_within_fov(self, p):
