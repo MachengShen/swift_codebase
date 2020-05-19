@@ -188,4 +188,6 @@ if __name__ == '__main__':
 
     config = parser.parse_args()
 
+    # config.use_handcraft_policy = True
+
     run(config)

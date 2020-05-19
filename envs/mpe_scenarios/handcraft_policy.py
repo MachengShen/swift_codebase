@@ -158,7 +158,8 @@ def if_rotate(agent, world, dist_thres):
     else:
         flag_rotate = False
 
-    rotate_action = np.array([0, 0])
+    # rotate_action = np.array([0, 0])
+    rotate_action = 0
     if flag_rotate:
         angle_to_room_center = np.pi + np.atan2(my_room.center.y - agent.state.p_pos[1],
                                         my_room.center.x - agent.state.p_pos[0])
@@ -195,6 +196,7 @@ def get_audio_action(agent, world, dist_thres):
                         return AudioAction.Freeze
                     else:
                         return AudioAction.HandsUp
+    # return None
     raise Exception("cannot find a valid action, check if there is any dummy agent within fov")
 
 # def get_audio_agent_list():
