@@ -89,15 +89,15 @@ class SwiftWorld(World):
 		num_cell_within_fov = 0
 
 		beliefs = np.array([room.get_cell_beliefs() for room in self.rooms]).flatten()
-		# max_belief, min_belief = np.max(beliefs), np.min(beliefs)
-		# print('max_belief is: ', max_belief, 'min_belief is: ', min_belief)
+		max_belief, min_belief = np.max(beliefs), np.min(beliefs)
+		print('max_belief is: ', max_belief, 'min_belief is: ', min_belief)
 		for i, agent in enumerate(self.agents):
 
-			# if agent.action.audio is None:
-			# 	# print("agent:", i, "u", agent.action.u, "r" ,agent.action.r, " audio: None")
-			# 	print("agent:", i, " audio: None")
-			# else:
-			# 	print("agent:", i, " audio:", agent.action.audio)
+			if agent.action.audio is None:
+				# print("agent:", i, "u", agent.action.u, "r" ,agent.action.r, " audio: None")
+				print("agent:", i, " audio: None")
+			else:
+				print("agent:", i, " audio:", agent.action.audio)
 
 			if agent.action.audio: #audio is not None
 				if agent.action.audio == AudioAction.HandsUp:
