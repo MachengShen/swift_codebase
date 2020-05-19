@@ -72,7 +72,7 @@ def handcraft_policy(agent, world)->Action:
             # agent.action.u[1] += action[0][3] - action[0][4]
     flag_rotate, rotate_action = if_rotate(agent, world, dist_thres)
     action.r = rotate_action
-    audio_action = get_audio_action()
+    audio_action = get_audio_action(agent, world)
     action.audio = audio_action
     # action = np.concatenate([translation_action] + [rotate_action] + [audio_action])
 
