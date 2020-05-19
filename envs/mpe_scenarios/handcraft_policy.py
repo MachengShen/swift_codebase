@@ -30,7 +30,7 @@ def handcraft_policy(agent, world)->Action:
         get_translate_agent_list(agent, world, dist_thres)
 
     translation_action = np.zeros(5)
-    action.u = np.zeros((2, 2))
+    action.u = np.zeros(2)
     if len(agent_list) > len(room_index):
         for i in range(len(agent_list) - len(room_index)):
             room_index.append(uncertainty_sort_index[i])
@@ -64,6 +64,10 @@ def handcraft_policy(agent, world)->Action:
                     # action.u = 1
             action.u[0] = -(translation_action[1] - translation_action[2])
             action.u[1] = -(translation_action[3] - translation_action[4])
+            action.r = 0.0
+            action.audio = None
+            return action
+
             # if action[0] == 1: agent.action.u[0] = -1.0
             # if action[0] == 2: agent.action.u[0] = +1.0
             # if action[0] == 3: agent.action.u[1] = -1.0
@@ -71,14 +75,16 @@ def handcraft_policy(agent, world)->Action:
             # agent.action.u[0] += action[0][1] - action[0][2]
             # agent.action.u[1] += action[0][3] - action[0][4]
     flag_rotate, rotate_action = if_rotate(agent, world, dist_thres)
-    action.r = rotate_action
+    if flag_rotate:
+        action.r = rotate_action
+        action.u = np.array([0.0, 0.0])
+        action.audio = None
+        return action
+
     audio_action = get_audio_action(agent, world, dist_thres)
+    action.u = np.array([0.0, 0.0])
+    action.r = 0.0
     action.audio = audio_action
-    # action = np.concatenate([translation_action] + [rotate_action] + [audio_action])
-
-    # action = Action()
-
-
     return action
 
 
