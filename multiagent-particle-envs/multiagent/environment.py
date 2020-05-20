@@ -114,7 +114,10 @@ class MultiAgentEnv(gym.Env):
             #info_n['n'].append(self._get_info(agent))
         # all agents get total reward in cooperative case
         #if self.shared_reward:
-        reward_n = [reward] * self.n
+        if not use_handcraft_policy:
+            reward_n = [reward] * self.n
+        else:
+            reward_n = [reward] * len(self.world.scripted_agents)
         if self.post_step_callback is not None:
             self.post_step_callback(self.world)
         info = self.world.get_stats()

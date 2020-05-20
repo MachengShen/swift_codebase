@@ -13,6 +13,12 @@ __pycache__/
 # C extensions
 *.so
 
+#result files
+/evaluate.py
+/data_plot.py
+figs/
+text/
+
 # Distribution / packaging
 .Python
 env/

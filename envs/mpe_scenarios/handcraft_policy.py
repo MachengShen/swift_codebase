@@ -191,9 +191,9 @@ def if_rotate(agent, world, dist_thres):
             return False, 0.0, cell_belief
     if not is_room_all_explored(my_room):
         return True, rotation_action(agent, my_room), None
-    # else:
-    #     return True, 0.0, None
-    raise Exception("cannot see the dummy inside the room!")
+    else:
+        return True, 0.0, None
+    # raise Exception("cannot see the dummy inside the room!")
 
     # if not flag_all_cells_explored and not flag_dummy_in_FOV:
     # if not flag_dummy_in_FOV:
@@ -224,7 +224,7 @@ def get_audio_action(agent, world, dist_thres, cell_belief):
     #                 continue
     #             if cell.get_cell_state() == CellState.ExploredHasAgent:
     # cell_belief = cell.get_belief()
-    if cell_belief < 0.1 or cell_belief > 0.95:
+    if cell_belief < 0.1 or cell_belief > 0.849:
         return None
     if cell_belief < 0.5:
         return AudioAction.Freeze
