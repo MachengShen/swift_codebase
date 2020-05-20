@@ -127,7 +127,7 @@ class World(object):
         self.damping = 0.25
         # contact response parameters
         self.contact_force = 1e+2
-        self.contact_margin = 3e-2
+        self.contact_margin = 1e-2#3e-2
         # cache distances between all agents (not calculated by default)
         self.cache_dists = False
         self.cached_dist_vect = None

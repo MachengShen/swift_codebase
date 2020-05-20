@@ -167,7 +167,7 @@ if __name__ == '__main__':
     parser.add_argument("--n_rollout_threads", default=1, type=int)
     parser.add_argument("--buffer_length", default=int(1e6), type=int)
     parser.add_argument("--n_episodes", default=50, type=int)
-    parser.add_argument("--episode_length", default=200, type=int)
+    parser.add_argument("--episode_length", default=300, type=int)
     parser.add_argument("--steps_per_update", default=1024, type=int)
     parser.add_argument("--num_updates", default=4, type=int,
                         help="Number of updates per update cycle")

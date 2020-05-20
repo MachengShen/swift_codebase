@@ -8,7 +8,7 @@ from multiagent.utils import Point, doIntersect
 
 # def handcraft_policy(agent, world):
 
-
+DELTA = 1/8
 def handcraft_policy(agent, world)->Action:
 
     # action: one hot \in R^9, 0~4: translation; 5: rotation; 6~8: audio
@@ -24,7 +24,7 @@ def handcraft_policy(agent, world)->Action:
     # if agent in agent_list: translate else rotate
     action = Action()
 
-    dist_thres = world.arena_size / world.num_room / 4 / 0.8
+    dist_thres = world.arena_size / world.num_room / 4 / (1*np.sqrt(2))
     # dist_thres = 1
 
     agent_list, room_index, uncertainty_sort_index = \
@@ -47,8 +47,10 @@ def handcraft_policy(agent, world)->Action:
             room = world.rooms[room_index[count]]
             room_window_center = 0.5 * np.array([room.window.p1.x + room.window.p2.x,
                                                  room.window.p1.y + room.window.p2.y])
-            dy = room_window_center[1] - agent.state.p_pos[1]
-            dx = room_window_center[0] - agent.state.p_pos[0]
+            room_window_center = 0.5 * np.array([room.window.p1.x + room.window.p2.x,
+                                                 room.window.p1.y + room.window.p2.y])
+            dy = room_window_center[1] - agent.state.p_pos[1] + 0
+            dx = room_window_center[0] - agent.state.p_pos[0] + 0
             if np.abs(dy) > np.abs(dx):
                 if dy > 0:
                     translation_action[4] = 1
@@ -114,11 +116,11 @@ def if_blue_with_room(agent, world, dist_thres):
                                              room.window.p1.y + room.window.p2.y])
         if np.linalg.norm(agent.state.p_pos - room_window_center) <= dist_thres:
             if not is_room_all_explored(room) or if_room_has_dummy_inside(room):
-                print(np.linalg.norm(agent.state.p_pos - room_window_center)<= dist_thres,
-                      not is_room_all_explored(room), if_room_has_dummy_inside(room))
+                # print(np.linalg.norm(agent.state.p_pos - room_window_center)<= dist_thres,
+                #       not is_room_all_explored(room), if_room_has_dummy_inside(room))
                 return True, room_index
-    print(np.linalg.norm(agent.state.p_pos - room_window_center) <= dist_thres,
-          not is_room_all_explored(room), if_room_has_dummy_inside(room))
+    # print(np.linalg.norm(agent.state.p_pos - room_window_center) <= dist_thres,
+    #       not is_room_all_explored(room), if_room_has_dummy_inside(room))
     return False, None
 
 
@@ -189,6 +191,9 @@ def if_rotate(agent, world, dist_thres):
             return False, 0.0, cell_belief
     if not is_room_all_explored(my_room):
         return True, rotation_action(agent, my_room), None
+    # else:
+    #     return True, 0.0, None
+    raise Exception("cannot see the dummy inside the room!")
 
     # if not flag_all_cells_explored and not flag_dummy_in_FOV:
     # if not flag_dummy_in_FOV:
