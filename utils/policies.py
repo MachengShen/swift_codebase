@@ -57,6 +57,7 @@ class DiscretePolicy(BasePolicy):
     def forward(self, obs, sample=True, return_all_probs=False,
                 return_log_pi=False, regularize=False,
                 return_entropy=False):
+        # print('obs', obs[:,0:8])
         out = super(DiscretePolicy, self).forward(obs)
         # _, action_dim = out.size()
         # # dim(u_aaction)=5, dim(r_action) = 2, dim(audio_action = 3)

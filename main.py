@@ -71,6 +71,7 @@ def run(config):
 
         for et_i in range(config.episode_length):
             # rearrange observations to be per agent, and convert to torch Variable
+            # print('obs is', obs)
             torch_obs = [Variable(torch.Tensor(np.vstack(obs[:, i])),
                                   requires_grad=False)
                          for i in range(model.nagents)]
@@ -119,7 +120,9 @@ def run(config):
 
 if __name__ == '__main__':
     parser = argparse.ArgumentParser()
-    parser.add_argument("--env_id", help="Name of environment", default='swift_scenario_backup')
+    # parser.add_argument("--env_id", help="Name of environment", default='swift_scenario_backup')
+    parser.add_argument("--env_id", help="Name of environment", default='swift_scenario_2')
+    # parser.add_argument("--env_id", help="Name of environment", default='swift_scenario')
     parser.add_argument("--model_name", default='model',
                         help="Name of directory to store " +
                              "model/training contents")
