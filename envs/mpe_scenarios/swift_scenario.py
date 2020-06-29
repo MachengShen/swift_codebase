@@ -332,7 +332,7 @@ class Room(object):
 
 class FieldOfView(object):
 	#blue agent filed of view
-	def __init__(self, attached_agent, half_view_angle=np.pi/4, sensing_range=1):
+	def __init__(self, attached_agent, half_view_angle=np.pi/4, sensing_range=1.5):
 		self._half_view_angle = half_view_angle
 		self._sensing_range = sensing_range
 		self._attached_agent = attached_agent
@@ -381,15 +381,21 @@ class Scenario(BaseScenario):
 	def make_world(self, use_handcraft_policy=False):
 		num_blue = 3
 		num_red = 1
+		num_grey = np.random.randint(3) + 1
 		num_grey = 2
+		num_room = num_red + num_grey
 		num_room = 4
-		num_room = np.random.randint(5)
+		# num_room = np.random.randint(5)
 		arena_size = 2.0
 
 		self.num_room = num_room
 		self.num_red = num_red
 		self.num_grey = num_grey
+		self.max_room_num_per_dim = 4
+		self.arena_size = arena_size
+		self.room_length = self.arena_size / self.max_room_num_per_dim
 
+		assert num_room <= self.max_room_num_per_dim**2, "must be <= maximum room num allowed"
 		assert num_room >= num_grey + num_red, "must ensure each room only has less than 1 agent"
 
 		world = SwiftWorld()
@@ -412,79 +418,95 @@ class Scenario(BaseScenario):
 
 		self._set_rooms(world, num_room, arena_size=arena_size)
 
-		self._set_room_windows(world, num_room, arena_size=arena_size)
+		# self._set_room_windows(world, num_room, arena_size=arena_size)
 		self._set_walls(world, num_room, arena_size=arena_size)
 
 		self.reset_world(world)  #reset_world also reset agents
 
 		return world
 
+	def _set_rooms(self, world, num_room, arena_size):
+		x_index = np.random.permutation(self.max_room_num_per_dim)[0:self.num_room] * 2 + 1
+		y_index = np.random.permutation(self.max_room_num_per_dim)[0:self.num_room] * 2 + 1
+		# x_index = np.random.randint(self.max_room_num_per_dim, size=self.num_room) * 2 + 1
+		# y_index = np.random.randint(self.max_room_num_per_dim, size=self.num_room) * 2 + 1
+		for i in range(self.num_room):
+			if x_index[i] != 1 and y_index[i] != self.max_room_num_per_dim*2-1:
+				if np.random.random() >= 0.5:
+					x_index[i] = 1
+				else:
+					y_index[i] = self.max_room_num_per_dim*2-1
+			if x_index[i] == 1 and y_index[i] == self.max_room_num_per_dim*2-1:
+				if np.random.random() >= 0.5:
+					x_index[i] = self.max_room_num_per_dim*2-1
+				else:
+					y_index[i] = 1
+
+
+		# length = arena_size / num_room
+		room_centers = np.array([[-arena_size/2 + self.room_length/2*i, -arena_size/2 + self.room_length/2*j]
+								 for i, j in zip(x_index, y_index)])
+		world.rooms = [Room(Point(room_centers[i, :]), self.room_length, self.room_length) for i in range(num_room)]
+		world.room_centers = room_centers
+
+	# def _set_room_windows(self, world, num_room, arena_size):
+	# 	length = self.room_length
+	# 	room_centers = world.room_centers
+		# print(room_centers[0, :])
+		window_length = self.room_length / 2
+		for i, room in enumerate(world.rooms):
+			if x_index[i] == 1:
+				orient_angle = 0
+			else:
+				orient_angle = -np.pi / 2
+
+			room.window = Room_window(
+				p1=Point(room_centers[i, :] + window_length*np.array([np.cos(orient_angle), np.sin(orient_angle)])),
+				p2=Point(room_centers[i, :] + np.sqrt(2)*window_length*np.array([np.cos(orient_angle - np.pi/4), np.sin(orient_angle - np.pi/4)])))
+
 	def _set_walls(self, world, num_room, arena_size):
-		num_wall = 3 * num_room + 1
-		length = arena_size / num_room
+		num_wall = 4*num_room
+		length = self.room_length
 		window_length = length / 2
-		#wall_orient = "H" * num_wall
-		wall_orient = ('HVH' * num_room) + 'V'
+		wall_orient = 'HVHV' * num_room
 		wall_axis_pos = np.zeros((num_wall))
 		wall_endpoints = []
+		room_centers = world.room_centers
 		for i in range(num_room):
-			#wall_orient[3*i:3*i+3] = 'HVH'
-			wall_axis_pos[3*i:3*i+3] = np.array([arena_size/2, -arena_size/2 + length*i, arena_size/2-length])
-			wall_endpoints.append((-arena_size/2 + length*i, -arena_size/2 + length*(i+1)))
-			wall_endpoints.append((arena_size/2, arena_size/2-length))
-			wall_endpoints.append((-arena_size/2 + length*i, -arena_size/2 + length*(i+1) - window_length))
-		#wall_orient[num_room-1] = 'V'
-		# wall_orient = wall_orient[:num_room - 1] + 'V' + wall_orient[num_room:]
-		wall_axis_pos[num_wall-1] = arena_size/2
-		wall_endpoints.append((arena_size/2, arena_size/2-length))
+			wall_axis_pos[4*i:4*i+4] = np.array([room_centers[i, 1] + window_length, room_centers[i, 0] - window_length,
+												 room_centers[i, 1] - window_length, room_centers[i, 0] + window_length])
+			wall_endpoints.append((room_centers[i, 0] - window_length, room_centers[i, 0] + window_length))
+			wall_endpoints.append((room_centers[i, 1] - window_length, room_centers[i, 1] + window_length))
+			wall_endpoints.append((room_centers[i, 0] - window_length, room_centers[i, 0] + window_length))
+			wall_endpoints.append((room_centers[i, 1] - window_length, room_centers[i, 1] + window_length))
 
 		world.walls = [Wall(orient=wall_orient[i], axis_pos=wall_axis_pos[i], endpoints=wall_endpoints[i]) for i in range(num_wall)]
-		for room in world.rooms:
-			world.walls.append(room.window.wall)
 
-
-		# boundary_wall_orient = 'VHV'
-		# boundary_wall_axis_pos = np.array([-arena_size/2, -arena_size/2, arena_size/2])
-		# boundary_wall_endpoints = []
-		# boundary_wall_endpoints.append((-arena_size/2, arena_size/2 - length))
-		# boundary_wall_endpoints.append((-arena_size / 2, arena_size / 2))
-		# boundary_wall_endpoints.append((-arena_size / 2, arena_size / 2 - length))
-		# for i in range(len(boundary_wall_orient)):
-		# 	world.walls.append(Wall(orient=boundary_wall_orient[i], axis_pos=boundary_wall_axis_pos[i], endpoints=boundary_wall_endpoints[i]))
 
 		arena_size_larger = 3
 		boundary_wall_orient = 'VHVH'
-		boundary_wall_axis_pos = np.array([-arena_size_larger / 2, -arena_size / 2, arena_size_larger / 2, arena_size / 2])
+		boundary_wall_axis_pos = np.array([-arena_size_larger / 2, -arena_size_larger / 2, arena_size_larger / 2, arena_size_larger / 2])
 		boundary_wall_endpoints = []
-		boundary_wall_endpoints.append((-arena_size / 2, arena_size / 2))
 		boundary_wall_endpoints.append((-arena_size_larger / 2, arena_size_larger / 2))
-		boundary_wall_endpoints.append((-arena_size / 2, arena_size / 2))
+		boundary_wall_endpoints.append((-arena_size_larger / 2, arena_size_larger / 2))
+		boundary_wall_endpoints.append((-arena_size_larger / 2, arena_size_larger / 2))
 		boundary_wall_endpoints.append((-arena_size_larger / 2, arena_size_larger / 2))
 		for i in range(len(boundary_wall_orient)):
 			world.walls.append(Wall(orient=boundary_wall_orient[i], axis_pos=boundary_wall_axis_pos[i],
 									endpoints=boundary_wall_endpoints[i]))
 
-	def _set_rooms(self, world, num_room, arena_size=2.0):
-		length = arena_size / num_room
-		room_centers = np.array([[-arena_size/2 + length/2 + i * length, arena_size/2 - length/2] for i in range(num_room)])
-		world.rooms = [Room(Point(room_centers[i, :]), length, length) for i in range(num_room)]
-		# raise NotImplementedError
-
-	def _set_room_windows(self, world, num_room, arena_size=2.0):
-		length = arena_size / num_room
-		window_length = length / 2
-		for i, room in enumerate(world.rooms):
-			room.window = Room_window(p1=Point(np.array([-arena_size/2 + length*i + window_length, arena_size/2-length])),
-										  p2=Point(np.array([-arena_size/2 + length*(i+1), arena_size/2-length])))
-
+		for room in world.rooms:
+			world.walls.append(room.window.wall)
 
 	def _reset_blue_states(self, world):
 		# raise NotImplementedError
 		for agent in world.agents:
 			agent.silent = True
-			agent.state.p_pos = np.random.uniform(-1, +1, world.dim_p)
+			agent.state.p_pos = np.random.uniform(-(self.arena_size-self.room_length), +(self.arena_size-self.room_length), world.dim_p)
 			if agent.state.p_pos[1] > 0: agent.state.p_pos[1] = 0
 			if agent.state.p_pos[1] < -0.9: agent.state.p_pos[1] = -0.9
+			if agent.state.p_pos[0] < 0: agent.state.p_pos[0] = 0
+			if agent.state.p_pos[0] > 0.9: agent.state.p_pos[0] = 0.9
 			agent.state.p_vel = np.zeros(world.dim_p)
 			agent.state.boresight = np.array([np.random.uniform(-np.pi, +np.pi)])
 			agent.state.c = np.zeros(world.dim_c)
