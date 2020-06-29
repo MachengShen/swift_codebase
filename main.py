@@ -119,7 +119,7 @@ def run(config):
 
 if __name__ == '__main__':
     parser = argparse.ArgumentParser()
-    parser.add_argument("--env_id", help="Name of environment", default='swift_scenario')
+    parser.add_argument("--env_id", help="Name of environment", default='swift_scenario_backup')
     parser.add_argument("--model_name", default='model',
                         help="Name of directory to store " +
                              "model/training contents")
