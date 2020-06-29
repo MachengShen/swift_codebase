@@ -383,6 +383,7 @@ class Scenario(BaseScenario):
 		num_red = 1
 		num_grey = 2
 		num_room = 4
+		num_room = np.random.randint(5)
 		arena_size = 2.0
 
 		self.num_room = num_room
