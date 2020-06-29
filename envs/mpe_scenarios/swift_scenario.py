@@ -396,6 +396,7 @@ class Scenario(BaseScenario):
 		self.room_length = self.arena_size / self.max_room_num_per_dim
 
 		assert num_room <= self.max_room_num_per_dim**2, "must be <= maximum room num allowed"
+		assert num_room <= self.max_room_num_per_dim * 2 - 2
 		assert num_room >= num_grey + num_red, "must ensure each room only has less than 1 agent"
 
 		world = SwiftWorld()
@@ -426,28 +427,46 @@ class Scenario(BaseScenario):
 		return world
 
 	def _set_rooms(self, world, num_room, arena_size):
-		x_index = np.random.permutation(self.max_room_num_per_dim)[0:self.num_room] * 2 + 1
-		y_index = np.random.permutation(self.max_room_num_per_dim)[0:self.num_room] * 2 + 1
-		# x_index = np.random.randint(self.max_room_num_per_dim, size=self.num_room) * 2 + 1
-		# y_index = np.random.randint(self.max_room_num_per_dim, size=self.num_room) * 2 + 1
+		# x_index = np.random.permutation(self.max_room_num_per_dim)[0:self.num_room] * 2 + 1
+		# y_index = np.random.permutation(self.max_room_num_per_dim)[0:self.num_room] * 2 + 1
+		# # x_index = np.random.randint(self.max_room_num_per_dim, size=self.num_room) * 2 + 1
+		# # y_index = np.random.randint(self.max_room_num_per_dim, size=self.num_room) * 2 + 1
+		# for i in range(self.num_room):
+		# 	if x_index[i] != 1 and y_index[i] != self.max_room_num_per_dim*2-1:
+		# 		if np.random.random() >= 0.5:
+		# 			x_index[i] = 1
+		# 		else:
+		# 			y_index[i] = self.max_room_num_per_dim*2-1
+		# 	if x_index[i] == 1 and y_index[i] == self.max_room_num_per_dim*2-1:
+		# 		if np.random.random() >= 0.5:
+		# 			x_index[i] = self.max_room_num_per_dim*2-1
+		# 		else:
+		# 			y_index[i] = 1
+
+		# xy_index = np.array([x_index,y_index]).astype(int).transpose()
+		xy_index = np.array([[1,1], [1,3], [1,5], [3,7], [5,7], [7,7]])
+		row_index = np.random.permutation(xy_index.shape[0])[0:self.num_room]
+		xy_index = xy_index[row_index,:]
+		x_index = xy_index[:,0]
+		y_index = xy_index[:,1]
+
+		dummy_x_index = np.kron(np.arange(self.max_room_num_per_dim) * 2 + 1, np.ones(self.max_room_num_per_dim))
+		dummy_y_index = np.kron(np.ones(self.max_room_num_per_dim), np.arange(self.max_room_num_per_dim) * 2 + 1)
+		dummy_xy_index = np.array([dummy_x_index, dummy_y_index]).astype(int).transpose()
 		for i in range(self.num_room):
-			if x_index[i] != 1 and y_index[i] != self.max_room_num_per_dim*2-1:
-				if np.random.random() >= 0.5:
-					x_index[i] = 1
-				else:
-					y_index[i] = self.max_room_num_per_dim*2-1
-			if x_index[i] == 1 and y_index[i] == self.max_room_num_per_dim*2-1:
-				if np.random.random() >= 0.5:
-					x_index[i] = self.max_room_num_per_dim*2-1
-				else:
-					y_index[i] = 1
+			index = np.where((dummy_xy_index == (xy_index[i,0], xy_index[i,1])).all(axis=1))
+			dummy_xy_index = np.delete(dummy_xy_index, index, axis=0)
 
-
+		assert dummy_xy_index.shape[0] + xy_index.shape[0] == self.max_room_num_per_dim**2
 		# length = arena_size / num_room
 		room_centers = np.array([[-arena_size/2 + self.room_length/2*i, -arena_size/2 + self.room_length/2*j]
-								 for i, j in zip(x_index, y_index)])
+								 for i, j in zip(xy_index[:,0], xy_index[:,1])])
 		world.rooms = [Room(Point(room_centers[i, :]), self.room_length, self.room_length) for i in range(num_room)]
 		world.room_centers = room_centers
+
+		dummy_room_centers = np.array([[-arena_size/2 + self.room_length/2*i, -arena_size/2 + self.room_length/2*j]
+								 for i, j in zip(dummy_xy_index[:,0], dummy_xy_index[:,1])])
+		world.dummy_rooms = [Room(Point(dummy_room_centers[i, :]), self.room_length, self.room_length) for i in range(dummy_xy_index.shape[0])]
 
 	# def _set_room_windows(self, world, num_room, arena_size):
 	# 	length = self.room_length
@@ -457,12 +476,20 @@ class Scenario(BaseScenario):
 		for i, room in enumerate(world.rooms):
 			if x_index[i] == 1:
 				orient_angle = 0
+				room.window = Room_window(
+					p1=Point(
+						room_centers[i, :] + window_length * np.array([np.cos(orient_angle), np.sin(orient_angle)])),
+					p2=Point(room_centers[i, :] + np.sqrt(2) * window_length * np.array(
+						[np.cos(orient_angle - np.pi / 4), np.sin(orient_angle - np.pi / 4)])))
 			else:
 				orient_angle = -np.pi / 2
+				room.window = Room_window(
+					p1=Point(
+						room_centers[i, :] + window_length * np.array([np.cos(orient_angle), np.sin(orient_angle)])),
+					p2=Point(room_centers[i, :] + np.sqrt(2) * window_length * np.array(
+						[np.cos(orient_angle + np.pi / 4), np.sin(orient_angle + np.pi / 4)])))
 
-			room.window = Room_window(
-				p1=Point(room_centers[i, :] + window_length*np.array([np.cos(orient_angle), np.sin(orient_angle)])),
-				p2=Point(room_centers[i, :] + np.sqrt(2)*window_length*np.array([np.cos(orient_angle - np.pi/4), np.sin(orient_angle - np.pi/4)])))
+
 
 	def _set_walls(self, world, num_room, arena_size):
 		num_wall = 4*num_room
@@ -549,11 +576,12 @@ class Scenario(BaseScenario):
 			other_vel.append(other.state.p_vel)
 			other_heading.append(other.state.boresight)
 
-		cell_info = []
+
 
 		def encode_boolean(bool):
 			return np.array([1, 0]) if bool else np.array([0, 1])
 
+		cell_info = []
 		for room in world.rooms:
 			for cell in room.cells:
 				cell_pos = np.array([cell._center.x, cell._center.y])
@@ -562,6 +590,17 @@ class Scenario(BaseScenario):
 				fov_flag = encode_boolean(flag_1 and flag_2)
 				cell_info.extend([cell_pos, fov_flag, cell.get_cell_state_encoding(), cell.get_belief()])
 
-		return np.concatenate([agent.state.p_vel] + [agent.state.p_pos] + [agent.state.boresight] + other_pos + other_vel + other_heading + cell_info)
+		dummy_cell_info = []
+		for room in world.dummy_rooms:
+			for cell in room.cells:
+				cell_pos = np.array([cell._center.x, cell._center.y])
+				flag_1 = agent.check_within_fov(cell_pos)
+				# flag_2 = doIntersect(Point(agent.state.p_pos), Point(cell_pos), room.window.p1, room.window.p2)
+				fov_flag = encode_boolean(flag_1)
+				dummy_cell_info.extend([cell_pos, fov_flag, cell.get_cell_state_encoding(), np.array([-1.])])
+
+		# return np.concatenate([agent.state.p_vel] + [agent.state.p_pos] + [agent.state.boresight] + other_pos + other_vel + other_heading + cell_info)
+		return np.concatenate([agent.state.p_vel] + [agent.state.p_pos] + [agent.state.boresight] + other_pos + other_vel + other_heading + cell_info + dummy_cell_info)
+
 
 
