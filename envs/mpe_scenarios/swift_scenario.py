@@ -427,84 +427,87 @@ class Scenario(BaseScenario):
 		return world
 
 	def _set_rooms(self, world, num_room, arena_size):
-		# x_index = np.random.permutation(self.max_room_num_per_dim)[0:self.num_room] * 2 + 1
-		# y_index = np.random.permutation(self.max_room_num_per_dim)[0:self.num_room] * 2 + 1
-		# # x_index = np.random.randint(self.max_room_num_per_dim, size=self.num_room) * 2 + 1
-		# # y_index = np.random.randint(self.max_room_num_per_dim, size=self.num_room) * 2 + 1
+
+		xy_index_all = np.array([[1,1], [1,3], [1,5], [3,7], [5,7], [7,7]])
+		row_index = np.random.permutation(xy_index_all.shape[0])[0:self.num_room]
+		xy_index = xy_index_all[row_index,:]
+		x_index_all = xy_index_all[:,0]
+		#
+		# dummy_x_index = np.kron(np.arange(self.max_room_num_per_dim) * 2 + 1, np.ones(self.max_room_num_per_dim))
+		# dummy_y_index = np.kron(np.ones(self.max_room_num_per_dim), np.arange(self.max_room_num_per_dim) * 2 + 1)
+		# dummy_xy_index = np.array([dummy_x_index, dummy_y_index]).astype(int).transpose()
 		# for i in range(self.num_room):
-		# 	if x_index[i] != 1 and y_index[i] != self.max_room_num_per_dim*2-1:
-		# 		if np.random.random() >= 0.5:
-		# 			x_index[i] = 1
-		# 		else:
-		# 			y_index[i] = self.max_room_num_per_dim*2-1
-		# 	if x_index[i] == 1 and y_index[i] == self.max_room_num_per_dim*2-1:
-		# 		if np.random.random() >= 0.5:
-		# 			x_index[i] = self.max_room_num_per_dim*2-1
-		# 		else:
-		# 			y_index[i] = 1
-
-		# xy_index = np.array([x_index,y_index]).astype(int).transpose()
-		xy_index = np.array([[1,1], [1,3], [1,5], [3,7], [5,7], [7,7]])
-		row_index = np.random.permutation(xy_index.shape[0])[0:self.num_room]
-		xy_index = xy_index[row_index,:]
-
-		# xy_index = np.array([[1, 7], [3, 7], [5, 7], [7, 7]])
-
-		x_index = xy_index[:,0]
-		y_index = xy_index[:,1]
-
-		dummy_x_index = np.kron(np.arange(self.max_room_num_per_dim) * 2 + 1, np.ones(self.max_room_num_per_dim))
-		dummy_y_index = np.kron(np.ones(self.max_room_num_per_dim), np.arange(self.max_room_num_per_dim) * 2 + 1)
-		dummy_xy_index = np.array([dummy_x_index, dummy_y_index]).astype(int).transpose()
-		for i in range(self.num_room):
-			index = np.where((dummy_xy_index == (xy_index[i,0], xy_index[i,1])).all(axis=1))
-			dummy_xy_index = np.delete(dummy_xy_index, index, axis=0)
-
-		delete_x_index = np.kron(np.arange(1, self.max_room_num_per_dim) * 2 + 1, np.ones(self.max_room_num_per_dim-1))
-		delete_y_index = np.kron(np.ones(self.max_room_num_per_dim-1), np.arange(self.max_room_num_per_dim-1) * 2 + 1)
-		delete_xy_index = np.array([delete_x_index, delete_y_index]).astype(int).transpose()
-		for i in range(delete_xy_index.shape[0]):
-			index = np.where((dummy_xy_index == (delete_xy_index[i,0], delete_xy_index[i,1])).all(axis=1))
-			dummy_xy_index = np.delete(dummy_xy_index, index, axis=0)
-
-
-		assert dummy_xy_index.shape[0] + xy_index.shape[0] + delete_xy_index.shape[0] == self.max_room_num_per_dim**2
+		# 	index = np.where((dummy_xy_index == (xy_index[i,0], xy_index[i,1])).all(axis=1))
+		# 	dummy_xy_index = np.delete(dummy_xy_index, index, axis=0)
+		#
+		# delete_x_index = np.kron(np.arange(1, self.max_room_num_per_dim) * 2 + 1, np.ones(self.max_room_num_per_dim-1))
+		# delete_y_index = np.kron(np.ones(self.max_room_num_per_dim-1), np.arange(self.max_room_num_per_dim-1) * 2 + 1)
+		# delete_xy_index = np.array([delete_x_index, delete_y_index]).astype(int).transpose()
+		# for i in range(delete_xy_index.shape[0]):
+		# 	index = np.where((dummy_xy_index == (delete_xy_index[i,0], delete_xy_index[i,1])).all(axis=1))
+		# 	dummy_xy_index = np.delete(dummy_xy_index, index, axis=0)
+		#
+		#
+		# assert dummy_xy_index.shape[0] + xy_index.shape[0] + delete_xy_index.shape[0] == self.max_room_num_per_dim**2
 		# length = arena_size / num_room
-		room_centers = np.array([[-arena_size/2 + self.room_length/2*i, -arena_size/2 + self.room_length/2*j]
+		agent_room_centers = np.array([[-arena_size/2 + self.room_length/2*i, -arena_size/2 + self.room_length/2*j]
 								 for i, j in zip(xy_index[:,0], xy_index[:,1])])
-		world.rooms = [Room(Point(room_centers[i, :]), self.room_length, self.room_length) for i in range(num_room)]
-		world.room_centers = room_centers
-		world.x_index = x_index
+		# # world.rooms = [Room(Point(room_centers[i, :]), self.room_length, self.room_length) for i in range(num_room)]
+		world.agent_room_centers = agent_room_centers
+		# world.x_index = x_index
+		world.x_index_all = x_index_all
 
 		# room_centers = np.array(
 		# 	[[-arena_size / 2 + self.room_length / 2 + i * self.room_length, arena_size / 2 - self.room_length / 2] for i in range(num_room)])
 		# world.rooms = [Room(Point(room_centers[i, :]), self.room_length, self.room_length) for i in range(num_room)]
 		# world.room_centers = room_centers
 
-		dummy_room_centers = np.array([[-arena_size/2 + self.room_length/2*i, -arena_size/2 + self.room_length/2*j]
-								 for i, j in zip(dummy_xy_index[:,0], dummy_xy_index[:,1])])
-		world.dummy_rooms = [Room(Point(dummy_room_centers[i, :]), self.room_length, self.room_length) for i in range(dummy_xy_index.shape[0])]
+		# dummy_room_centers = np.array([[-arena_size/2 + self.room_length/2*i, -arena_size/2 + self.room_length/2*j]
+		# 						 for i, j in zip(dummy_xy_index[:,0], dummy_xy_index[:,1])])
+		# world.dummy_rooms = [Room(Point(dummy_room_centers[i, :]), self.room_length, self.room_length) for i in range(dummy_xy_index.shape[0])]
+
+
+
+		all_room_centers = np.array([[-arena_size/2 + self.room_length/2*i, -arena_size/2 + self.room_length/2*j]
+								 for i, j in zip(xy_index_all[:,0], xy_index_all[:,1])])
+		world.rooms = [Room(Point(all_room_centers[i, :]), self.room_length, self.room_length) for i in range(all_room_centers.shape[0])]
+		world.all_room_centers = all_room_centers
+		world.row_index = row_index
+		world.agent_rooms = [world.rooms[row_index_] for row_index_ in row_index]
+		# world.room_centers = room_centers
+		# world.x_index = x_index
+		#
+		# dummy_row_index = np.arange(len(world.all_rooms))
+		# for i in row_index:
+		# 	index = np.where((dummy_row_index == (i)))
+		# 	if len(index) > 0:
+		# 		dummy_row_index = np.delete(dummy_row_index, index)
+		# world.dummy_rooms = [world.all_rooms[row_index_] for row_index_ in dummy_row_index]
+
+
 
 	def _set_room_windows(self, world, num_room, arena_size):
 		length = self.room_length
-		room_centers = world.room_centers
-		x_index = world.x_index
+		# room_centers = world.room_centers
+		all_room_centers = world.all_room_centers
+		# x_index = world.x_index
+		x_index_all = world.x_index_all
 		# print(room_centers[0, :])
 		window_length = self.room_length / 2
 		for i, room in enumerate(world.rooms):
-			if x_index[i] == 1:
+			if x_index_all[i] == 1:
 				orient_angle = 0
 				room.window = Room_window(
 					p1=Point(
-						room_centers[i, :] + window_length * np.array([np.cos(orient_angle), np.sin(orient_angle)])),
-					p2=Point(room_centers[i, :] + np.sqrt(2) * window_length * np.array(
+						all_room_centers[i, :] + window_length * np.array([np.cos(orient_angle), np.sin(orient_angle)])),
+					p2=Point(all_room_centers[i, :] + np.sqrt(2) * window_length * np.array(
 						[np.cos(orient_angle - np.pi / 4), np.sin(orient_angle - np.pi / 4)])))
 			else:
 				orient_angle = -np.pi / 2
 				room.window = Room_window(
 					p1=Point(
-						room_centers[i, :] + window_length * np.array([np.cos(orient_angle), np.sin(orient_angle)])),
-					p2=Point(room_centers[i, :] + np.sqrt(2) * window_length * np.array(
+						all_room_centers[i, :] + window_length * np.array([np.cos(orient_angle), np.sin(orient_angle)])),
+					p2=Point(all_room_centers[i, :] + np.sqrt(2) * window_length * np.array(
 						[np.cos(orient_angle + np.pi / 4), np.sin(orient_angle + np.pi / 4)])))
 
 
@@ -516,7 +519,7 @@ class Scenario(BaseScenario):
 		wall_orient = 'HVHV' * num_room
 		wall_axis_pos = np.zeros((num_wall))
 		wall_endpoints = []
-		room_centers = world.room_centers
+		room_centers = world.agent_room_centers
 		for i in range(num_room):
 			wall_axis_pos[4*i:4*i+4] = np.array([room_centers[i, 1] + window_length, room_centers[i, 0] - window_length,
 												 room_centers[i, 1] - window_length, room_centers[i, 0] + window_length])
@@ -541,7 +544,7 @@ class Scenario(BaseScenario):
 			world.walls.append(Wall(orient=boundary_wall_orient[i], axis_pos=boundary_wall_axis_pos[i],
 									endpoints=boundary_wall_endpoints[i]))
 
-		for room in world.rooms:
+		for room in world.agent_rooms:
 			world.walls.append(room.window.wall)
 
 	def _reset_blue_states(self, world):
@@ -559,7 +562,8 @@ class Scenario(BaseScenario):
 
 
 	def _permute_dummy_agents_index(self, world):
-		permuted_index = np.random.permutation(self.num_room)
+		permuted_index = np.random.permutation(world.row_index)
+		# permuted_index = np.random.permutation(self.num_room)
 		for i in range(self.num_red + self.num_grey):
 			world.dummy_agents[i].room_index = permuted_index[i]
 
@@ -571,6 +575,11 @@ class Scenario(BaseScenario):
 			world.rooms[agent.room_index].add_agent(agent)
 
 	def reset_world(self, world):
+		self._set_rooms(world, self.num_room, arena_size=self.arena_size)
+		self._set_room_windows(world, self.num_room, arena_size=self.arena_size)
+		self._set_walls(world, self.num_room, arena_size=self.arena_size)
+
+
 		self._reset_blue_states(world)
 		self._permute_dummy_agents_index(world)
 		self._reset_dummy_agents_location(world)  #room states are also reset
@@ -600,6 +609,26 @@ class Scenario(BaseScenario):
 		def encode_boolean(bool):
 			return np.array([1, 0]) if bool else np.array([0, 1])
 
+		# cell_info = []
+		# for room in world.rooms:
+		# 	for cell in room.cells:
+		# 		cell_pos = np.array([cell._center.x, cell._center.y])
+		# 		flag_1 = agent.check_within_fov(cell_pos)
+		# 		flag_2 = doIntersect(Point(agent.state.p_pos), Point(cell_pos), room.window.p1, room.window.p2)
+		# 		fov_flag = encode_boolean(flag_1 and flag_2)
+		# 		cell_info.extend([cell_pos, fov_flag, cell.get_cell_state_encoding(), cell.get_belief()])
+		# 		# print('cell_pos', cell_pos, 'fov_flag', fov_flag, 'cell.get_cell_state_encoding()',cell.get_cell_state_encoding(),
+		# 		# 	  'cell.get_belief()', cell.get_belief())
+		#
+		# dummy_cell_info = []
+		# for room in world.dummy_rooms:
+		# 	for cell in room.cells:
+		# 		cell_pos = np.array([cell._center.x, cell._center.y])
+		# 		flag_1 = agent.check_within_fov(cell_pos)
+		# 		flag_2 = doIntersect(Point(agent.state.p_pos), Point(cell_pos), room.window.p1, room.window.p2)
+		# 		fov_flag = encode_boolean(flag_1 and flag_2)
+		# 		dummy_cell_info.extend([cell_pos, fov_flag, cell.get_cell_state_encoding(), cell.get_belief()])
+
 		cell_info = []
 		for room in world.rooms:
 			for cell in room.cells:
@@ -608,20 +637,9 @@ class Scenario(BaseScenario):
 				flag_2 = doIntersect(Point(agent.state.p_pos), Point(cell_pos), room.window.p1, room.window.p2)
 				fov_flag = encode_boolean(flag_1 and flag_2)
 				cell_info.extend([cell_pos, fov_flag, cell.get_cell_state_encoding(), cell.get_belief()])
-				# print('cell_pos', cell_pos, 'fov_flag', fov_flag, 'cell.get_cell_state_encoding()',cell.get_cell_state_encoding(),
-				# 	  'cell.get_belief()', cell.get_belief())
 
-		dummy_cell_info = []
-		for room in world.dummy_rooms:
-			for cell in room.cells:
-				cell_pos = np.array([cell._center.x, cell._center.y])
-				flag_1 = agent.check_within_fov(cell_pos)
-				# flag_2 = doIntersect(Point(agent.state.p_pos), Point(cell_pos), room.window.p1, room.window.p2)
-				fov_flag = encode_boolean(flag_1)
-				dummy_cell_info.extend([cell_pos, fov_flag, cell.get_cell_state_encoding(), np.array([-1.])])
-
-		# output = np.concatenate([agent.state.p_vel] + [agent.state.p_pos] + [agent.state.boresight] + other_pos + other_vel + other_heading + cell_info)
-		output = np.concatenate([agent.state.p_vel] + [agent.state.p_pos] + [agent.state.boresight] + other_pos + other_vel + other_heading + cell_info + dummy_cell_info)
+		output = np.concatenate([agent.state.p_vel] + [agent.state.p_pos] + [agent.state.boresight] + other_pos + other_vel + other_heading + cell_info)
+		# output = np.concatenate([agent.state.p_vel] + [agent.state.p_pos] + [agent.state.boresight] + other_pos + other_vel + other_heading + cell_info + dummy_cell_info)
 		# print(output)
 		return output
 
