@@ -460,7 +460,15 @@ class Scenario(BaseScenario):
 			index = np.where((dummy_xy_index == (xy_index[i,0], xy_index[i,1])).all(axis=1))
 			dummy_xy_index = np.delete(dummy_xy_index, index, axis=0)
 
-		assert dummy_xy_index.shape[0] + xy_index.shape[0] == self.max_room_num_per_dim**2
+		delete_x_index = np.kron(np.arange(1, self.max_room_num_per_dim) * 2 + 1, np.ones(self.max_room_num_per_dim-1))
+		delete_y_index = np.kron(np.ones(self.max_room_num_per_dim-1), np.arange(self.max_room_num_per_dim-1) * 2 + 1)
+		delete_xy_index = np.array([delete_x_index, delete_y_index]).astype(int).transpose()
+		for i in range(delete_xy_index.shape[0]):
+			index = np.where((dummy_xy_index == (delete_xy_index[i,0], delete_xy_index[i,1])).all(axis=1))
+			dummy_xy_index = np.delete(dummy_xy_index, index, axis=0)
+
+
+		assert dummy_xy_index.shape[0] + xy_index.shape[0] + delete_xy_index.shape[0] == self.max_room_num_per_dim**2
 		# length = arena_size / num_room
 		room_centers = np.array([[-arena_size/2 + self.room_length/2*i, -arena_size/2 + self.room_length/2*j]
 								 for i, j in zip(xy_index[:,0], xy_index[:,1])])
@@ -540,7 +548,7 @@ class Scenario(BaseScenario):
 		# raise NotImplementedError
 		for agent in world.agents:
 			agent.silent = True
-			agent.state.p_pos = np.random.uniform(-(self.arena_size-self.room_length), +(self.arena_size-self.room_length), world.dim_p)
+			agent.state.p_pos = np.random.uniform(0, +(self.arena_size/2-self.room_length), world.dim_p)
 			if agent.state.p_pos[1] > 0: agent.state.p_pos[1] = 0
 			if agent.state.p_pos[1] < -0.9: agent.state.p_pos[1] = -0.9
 			if agent.state.p_pos[0] < 0: agent.state.p_pos[0] = 0
