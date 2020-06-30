@@ -14,8 +14,8 @@ __pycache__/
 *.so
 
 #result files
-/evaluate.py
-/data_plot.py
+#/evaluate.py
+#/data_plot.py
 figs/
 text/
 

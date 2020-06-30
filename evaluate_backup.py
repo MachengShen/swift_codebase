@@ -11,7 +11,6 @@ from utils.buffer import ReplayBuffer
 from utils.env_wrappers import SubprocVecEnv, DummyVecEnv
 from algorithms.attention_sac import AttentionSAC
 import time
-from data_plot import plot_array
 BENCHMARK = True
 
 """
@@ -62,7 +61,6 @@ def run(config):
                                        attend_heads=config.attend_heads,
                                        reward_scale=config.reward_scale)
 
-    # model.init_from_save_self('./models/swift_scenario/model/run9/model.pt')
     model.init_from_save_self('./models/swift_scenario/model/run2/model.pt')
     replay_buffer = ReplayBuffer(config.buffer_length, model.nagents,
                                  [obsp.shape[0] for obsp in env.observation_space],
@@ -71,11 +69,6 @@ def run(config):
     t = 0
 
     update_count = 0
-    cumulative_reward = np.zeros((config.n_episodes, config.episode_length))
-    num_room_explored = np.zeros((config.n_episodes, config.episode_length))
-    num_dummy_agents = np.zeros((config.n_episodes, config.episode_length))
-    max_belief = np.zeros((config.n_episodes, config.episode_length))
-    min_belief = np.zeros((config.n_episodes, config.episode_length))
     for ep_i in range(0, config.n_episodes, config.n_rollout_threads):
         print("Episodes %i-%i of %i" % (ep_i + 1,
                                         ep_i + 1 + config.n_rollout_threads,
@@ -101,15 +94,7 @@ def run(config):
             next_obs, rewards, dones, infos = env.step(agent_actions, use_handcraft_policy=config.use_handcraft_policy)
             env.render()
             time.sleep(0.1)
-            stats = env.world.stat.get_stats()
-            if et_i == 0:
-                cumulative_reward[ep_i, et_i] = rewards[0]
-            else:
-                cumulative_reward[ep_i, et_i] = cumulative_reward[ep_i, et_i-1] + rewards[0]
-            num_room_explored[ep_i, et_i] = stats['num_room_explored']
-            num_dummy_agents[ep_i, et_i] = stats['num_dummy_agents']
-            max_belief[ep_i, et_i] = stats['max_belief']
-            min_belief[ep_i, et_i] = stats['min_belief']
+
 
             # # # get actions as torch Variables
             # torch_agent_actions = model.step(torch_obs, explore=True)
@@ -171,40 +156,13 @@ def run(config):
     print(cover_ratio)
     '''
     env.close()
-    cumulative_reward_mean = np.mean(cumulative_reward, axis=0)
-    cumulative_reward_var = np.var(cumulative_reward, axis=0)
 
-    num_room_explored_mean = np.mean(num_room_explored, axis=0)
-    num_room_explored_var = np.var(num_room_explored, axis=0)
-
-    num_dummy_agents_mean = np.mean(num_dummy_agents, axis=0)
-    num_dummy_agents_var = np.var(num_dummy_agents, axis=0)
-
-    max_belief_mean = np.mean(max_belief, axis=0)
-    max_belief_var = np.var(max_belief, axis=0)
-
-    min_belief_mean = np.mean(min_belief, axis=0)
-    min_belief_var = np.var(min_belief, axis=0)
-
-    stats_summary = np.stack((cumulative_reward_mean, cumulative_reward_var, num_room_explored_mean, num_room_explored_var,
-                              num_dummy_agents_mean, num_dummy_agents_var, max_belief_mean, max_belief_var,
-                              min_belief_mean, min_belief_var), axis=0)
-
-    if config.use_handcraft_policy:
-        a_file = open("./text/handcraft.txt", "w")
-    else:
-        a_file = open("./text/trained.txt", "w")
-
-    # for row in stats_summary:
-    #     np.savetxt(a_file, row, newline='\n')
-    np.savetxt(a_file, stats_summary, newline='\n')
-
-    a_file.close()
-    plot_array(stats_summary)
 
 if __name__ == '__main__':
     parser = argparse.ArgumentParser()
-    parser.add_argument("--env_id", default='swift_scenario', help="Name of environment")
+    # parser.add_argument("--env_id", help="Name of environment", default='swift_scenario_backup')
+    # parser.add_argument("--env_id", help="Name of environment", default='swift_scenario_2')
+    parser.add_argument("--env_id", help="Name of environment", default='swift_scenario')
     parser.add_argument("--model_name", default='none',
                         help="Name of directory to store " +
                              "model/training contents")
@@ -232,6 +190,6 @@ if __name__ == '__main__':
 
     config = parser.parse_args()
 
-    # config.use_handcraft_policy = True
+    config.use_handcraft_policy = True
 
     run(config)

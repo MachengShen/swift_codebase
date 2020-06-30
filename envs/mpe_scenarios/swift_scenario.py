@@ -90,7 +90,7 @@ class SwiftWorld(World):
 
 		beliefs = np.array([room.get_cell_beliefs() for room in self.rooms]).flatten()
 		max_belief, min_belief = np.max(beliefs), np.min(beliefs)
-		# print('max_belief is: ', max_belief, 'min_belief is: ', min_belief)
+		print('max_belief is: ', max_belief, 'min_belief is: ', min_belief)
 		for i, agent in enumerate(self.agents):
 
 			# if agent.action.audio is None:

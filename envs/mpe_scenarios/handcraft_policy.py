@@ -10,7 +10,9 @@ from multiagent.utils import Point, doIntersect
 
 DELTA = 1/8
 def handcraft_policy(agent, world)->Action:
-
+    # row_index = world.row_index
+    # world.rooms = [world.rooms[row_index_] for row_index_ in row_index]
+    world.rooms = world.agent_rooms
     # action: one hot \in R^9, 0~4: translation; 5: rotation; 6~8: audio
     # TODO: as before, I can do translation and rotation; Macheng can do audio]
     # get_unexplored_room_index
@@ -25,6 +27,7 @@ def handcraft_policy(agent, world)->Action:
     action = Action()
 
     dist_thres = world.arena_size / world.num_room / 4 / (1*np.sqrt(2))
+    dist_thres = world.arena_size / world.num_room / 4 / 2
     # dist_thres = 1
 
     agent_list, room_index, uncertainty_sort_index = \
