@@ -63,7 +63,7 @@ def run(config):
                                        reward_scale=config.reward_scale)
 
     # model.init_from_save_self('./models/swift_scenario/model/run9/model.pt')
-    model.init_from_save_self('./models/swift_scenario/model/run2/model.pt')
+    model.init_from_save_self('./models/swift_scenario_3d/model/run1/model.pt')
     replay_buffer = ReplayBuffer(config.buffer_length, model.nagents,
                                  [obsp.shape[0] for obsp in env.observation_space],
                                  [acsp.shape[0] if isinstance(acsp, Box) else acsp.n
@@ -99,8 +99,8 @@ def run(config):
             # agent_actions[1][5]=1
             # agent_actions[2][5]=1
             next_obs, rewards, dones, infos = env.step(agent_actions, use_handcraft_policy=config.use_handcraft_policy)
-            env.render()
-            time.sleep(0.1)
+            # env.render()
+            # time.sleep(0.1)
             stats = env.world.stat.get_stats()
             if et_i == 0:
                 cumulative_reward[ep_i, et_i] = rewards[0]
@@ -204,7 +204,7 @@ def run(config):
 
 if __name__ == '__main__':
     parser = argparse.ArgumentParser()
-    parser.add_argument("--env_id", default='swift_scenario', help="Name of environment")
+    parser.add_argument("--env_id", default='swift_scenario_3d', help="Name of environment")
     parser.add_argument("--model_name", default='none',
                         help="Name of directory to store " +
                              "model/training contents")

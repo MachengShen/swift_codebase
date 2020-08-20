@@ -195,7 +195,6 @@ class MultiAgentEnv(gym.Env):
                 if self.discrete_action_space:
                     agent.action.u[0] += action[0][1] - action[0][2]
                     agent.action.u[1] += action[0][3] - action[0][4]
-                    agent.action.u[2] += action[0][5] - action[0][6]
                 else:
                     agent.action.u = action[0]
             sensitivity = 5.0
@@ -215,12 +214,9 @@ class MultiAgentEnv(gym.Env):
         # rotation action
         # rotation_encoding = action_current[self.world.dim_p * 2 + 1:self.world.dim_p * 2 + 1+self.world.dim_rotation]
         rotation_encoding = action[0]
-        agent.action.r = np.array([0, 0], dtype=float)
-        rotate_unit = 1. #1 or np.pi/2
-        if np.abs(rotation_encoding[0] - 1) < 1e-5: agent.action.r[0] = -rotate_unit
-        if np.abs(rotation_encoding[1] - 1) < 1e-5: agent.action.r[0] = +rotate_unit
-        if np.abs(rotation_encoding[2] - 1) < 1e-5: agent.action.r[1] = -rotate_unit
-        if np.abs(rotation_encoding[3] - 1) < 1e-5: agent.action.r[1] = +rotate_unit
+        agent.action.r = 0
+        if np.abs(rotation_encoding[0] - 1) < 1e-5: agent.action.r = -np.pi/2
+        if np.abs(rotation_encoding[1] - 1) < 1e-5: agent.action.r = +np.pi/2
         # agent.action.r = action[0]
         action = action[1:]
 

@@ -28,7 +28,8 @@ def plot_array(stats_summary1, stats_summary2=None):
         fig, ax = plt.subplots()
         # fig, ax = fig_list[i]
 
-        var_ratio = 5e-3 if i == 0 else 1
+        var_ratio = 1e-3 if i == 0 else 1
+        # var_ratio = 5e-3
         ax.plot(step_index, current_mean, '-b', label='learned policy')
         ax.fill_between(step_index, current_mean - var_ratio*current_var,
                         current_mean + var_ratio*current_var, facecolor="blue", alpha=0.3)
@@ -70,11 +71,14 @@ if __name__ == '__main__':
     # handcraft_policy_data = f2.read()
     # f1.close()
     # f2.close()
-    handcraft_policy_data = None
+    flag_handcraft_policy_data = False
     trained_policy_data = np.genfromtxt("./text/trained.txt", dtype='str')
     trained_policy_data = trained_policy_data.astype(np.float)
 
-    handcraft_policy_data = np.genfromtxt("./text/handcraft.txt", dtype='str')
-    handcraft_policy_data = handcraft_policy_data.astype(np.float)
+    if flag_handcraft_policy_data:
+        handcraft_policy_data = np.genfromtxt("./text/handcraft.txt", dtype='str')
+        handcraft_policy_data = handcraft_policy_data.astype(np.float)
+    else:
+        handcraft_policy_data = None
 
     plot_array(trained_policy_data, handcraft_policy_data)

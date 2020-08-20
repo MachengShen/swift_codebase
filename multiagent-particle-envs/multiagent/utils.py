@@ -1,82 +1,68 @@
+import numpy as np
+
 class Point:
     def __init__(self, xy):
         self.x = xy[0]
         self.y = xy[1]
+        self.z = xy[2]
 
     def new_point(self, xy):
         #generate a new point which is offset by xy
-        return Point([self.x + xy[0], self.y + xy[1]])
+        return Point([self.x + xy[0], self.y + xy[1], self.z + xy[2]])
 
-def _onSegment(p, q, r):
-    # TODO: does this method use the points defining windows?
-    # TODO: if this method is also needed by other classes, then do not define as
-    # a class method
-    if ((q.x <= max(p.x, r.x)) and (q.x >= min(p.x, r.x)) and
-            (q.y <= max(p.y, r.y)) and (q.y >= min(p.y, r.y))):
-        return True
-    return False
+def LinePlaneCollision(planeNormal, planePoint, rayDirection, rayPoint, epsilon=1e-6):
+    flag_intersection = True
+    ndotu = planeNormal.dot(rayDirection)
+    if abs(ndotu) < epsilon:
+        flag_intersection = False
+        Psi = None
+        return flag_intersection, Psi
 
-def _orientation(p, q, r):
-    # TODO: does this method use the points defining windows?
-
-    # to find the orientation of an ordered triplet (p,q,r)
-    # function returns the following values:
-    # 0 : Colinear points
-    # 1 : Clockwise points
-    # 2 : Counterclockwise
-
-    # See https://www.geeksforgeeks.org/orientation-3-ordered-points/amp/
-    # for details of below formula.
-
-    val = (float(q.y - p.y) * (r.x - q.x)) - (float(q.x - p.x) * (r.y - q.y))
-    if (val > 0):
-        # Clockwise orientation
-        return 1
-    elif (val < 0):
-        # Counterclockwise orientation
-        return 2
-    else:
-        # Colinear orientation
-        return 0
-
+    w = rayPoint - planePoint
+    si = -planeNormal.dot(w) / ndotu
+    Psi = w + si * rayDirection + planePoint
+    return flag_intersection, Psi
 
 # The main function that returns true if
 # the line segment 'p1q1' and 'p2q2' intersect.
-def doIntersect(p1, q1, p2, q2):
-    # TODO: does this method use the points defining windows?
-    """
-    p1 = Point(_p1)
-    q1 = Point(_q1)
-    p2 = Point(_p2)
-    q2 = Point(_q2)
-    """
-    # Find the 4 orientations required for
-    # the general and special cases
-    o1 = _orientation(p1, q1, p2)
-    o2 = _orientation(p1, q1, q2)
-    o3 = _orientation(p2, q2, p1)
-    o4 = _orientation(p2, q2, q1)
+def doIntersect(p_pos, cell_pos, window):
+    endpoints = np.array(window.endpoints)
+    planeNormal = np.array([0, 0, 0])
+    if window.orient == 'x':
+        dim_normal = 0
+        planePoint = np.array([window.axis_pos, np.mean(endpoints[0:2]), np.mean(endpoints[2:])])
+    elif window.orient == 'y':
+        dim_normal = 1
+        planePoint = np.array([np.mean(endpoints[0:2]), window.axis_pos, np.mean(endpoints[2:])])
+    elif window.orient == 'z':
+        dim_normal = 2
+        planePoint = np.array([np.mean(endpoints[0:2]), np.mean(endpoints[2:]), window.axis_pos])
+    else:
+        raise ValueError
 
-    # General case
-    if ((o1 != o2) and (o3 != o4)):
-        return True
+    planeNormal[dim_normal] = 1
+    # if two points stay in the same side of the plane
+    # then the segment will not intersect with the plane
+    flag1 = 1 if p_pos[dim_normal] > window.axis_pos else 0
+    flag2 = 1 if cell_pos[dim_normal] > window.axis_pos else 0
+    if flag1 + flag2 != 1:
+        return False
 
-    # Special Cases
-    # p1 , q1 and p2 are colinear and p2 lies on segment p1q1
-    if ((o1 == 0) and _onSegment(p1, p2, q1)):
-        return True
-    # p1 , q1 and q2 are colinear and q2 lies on segment p1q1
-    if ((o2 == 0) and _onSegment(p1, q2, q1)):
-        return True
-    # p2 , q2 and p1 are colinear and p1 lies on segment p2q2
-    if ((o3 == 0) and _onSegment(p2, p1, q2)):
-        return True
-    # p2 , q2 and q1 are colinear and q1 lies on segment p2q2
-    if ((o4 == 0) and _onSegment(p2, q1, q2)):
-        return True
-    # If none of the cases
-    return False
+    rayDirection = p_pos - cell_pos
+    rayPoint = p_pos
+    flag_linePlaneCollision, Psi = LinePlaneCollision(planeNormal, planePoint, rayDirection, rayPoint, epsilon=1e-6)
+    if not flag_linePlaneCollision:
+        return flag_linePlaneCollision
+    else:
+        psi_del = np.delete(Psi, dim_normal)
+        if (psi_del[0] >= endpoints[0] and
+            psi_del[0] <= endpoints[1] and
+            psi_del[1] >= endpoints[2] and
+            psi_del[1] <= endpoints[3]):
+            return True
+        else:
+            return False
 
-# def intersect(self, line: list) -> bool:
-# 	#return if intersect with a list of two np arrays specifying a line
-# 	raise NotImplementedError
+
+
+

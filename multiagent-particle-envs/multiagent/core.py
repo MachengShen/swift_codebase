@@ -29,13 +29,14 @@ class Action(object):
         self.audio = None
 
 class Wall(object):
-    def __init__(self, orient='H', axis_pos=0.0, endpoints=(-1, 1), width=0.025,
+    def __init__(self, orient='x', axis_pos=0.0, endpoints=(-1, 1, -1, 1), width=0.025,
                  hard=True):
-        # orientation: 'H'orizontal or 'V'ertical
+        # orientation: plane described as 'x'=0 or 'y'=0
         self.orient = orient
-        # position along axis which wall lays on (y-axis for H, x-axis for V)
+        # position along axis which wall lays on (x-axis for x, y-axis for y)
         self.axis_pos = axis_pos
-        # endpoints of wall (x-coords for H, y-coords for V)
+        # endpoints of wall ((y_low, y_high,z_low, z_high)-coords for x,
+        # (x_low, x_high,z_low, z_high)-coords for y): list of 2d arrays
         self.endpoints = np.array(endpoints)
         # width of wall
         self.width = width
@@ -118,7 +119,7 @@ class World(object):
         # communication channel dimensionality
         self.dim_c = 0
         # position dimensionality
-        self.dim_p = 2
+        self.dim_p = 3
         # color dimensionality
         self.dim_color = 3
         # simulation timestep
@@ -133,7 +134,7 @@ class World(object):
         self.cached_dist_vect = None
         self.cached_dist_mag = None
 
-        self.dim_rotation = 2
+        self.dim_rotation = 4
         self.dim_audio = 3
 
     # return all entities in the world
@@ -268,10 +269,9 @@ class World(object):
             if (p_force[i] is not None):
                 entity.state.p_vel += (p_force[i] / entity.mass) * self.dt
             if entity.max_speed is not None:
-                speed = np.sqrt(np.square(entity.state.p_vel[0]) + np.square(entity.state.p_vel[1]))
+                speed = np.sqrt(np.square(entity.state.p_vel[0]) + np.square(entity.state.p_vel[1]) + np.square(entity.state.p_vel[2]))
                 if speed > entity.max_speed:
-                    entity.state.p_vel = entity.state.p_vel / np.sqrt(np.square(entity.state.p_vel[0]) +
-                                                                  np.square(entity.state.p_vel[1])) * entity.max_speed
+                    entity.state.p_vel = entity.state.p_vel / speed * entity.max_speed
             entity.state.p_pos += entity.state.p_vel * self.dt
 
     # integrate physical state
@@ -334,25 +334,27 @@ class World(object):
     def get_wall_collision_force(self, entity, wall):
         if entity.ghost and not wall.hard:
             return None  # ghost passes through soft walls
-        if wall.orient == 'H':
-            prll_dim = 0
-            perp_dim = 1
-        else:
-            prll_dim = 1
+        if wall.orient == 'x':
+            prll_dim1 = 1
+            prll_dim2 = 2
             perp_dim = 0
+        elif wall.orient == 'y':
+            prll_dim1 = 0
+            prll_dim2 = 2
+            perp_dim = 1
+        elif wall.orient == 'z':
+            prll_dim1 = 0
+            prll_dim2 = 1
+            perp_dim = 2
+        else:
+            raise ValueError
         ent_pos = entity.state.p_pos
-        if (ent_pos[prll_dim] < wall.endpoints[0] - entity.size or
-            ent_pos[prll_dim] > wall.endpoints[1] + entity.size):
+
+        if (ent_pos[prll_dim1] < wall.endpoints[0] or
+            ent_pos[prll_dim1] > wall.endpoints[1] or
+            ent_pos[prll_dim2] < wall.endpoints[2] or
+            ent_pos[prll_dim2] > wall.endpoints[3]):
             return None  # entity is beyond endpoints of wall
-        elif (ent_pos[prll_dim] < wall.endpoints[0] or
-              ent_pos[prll_dim] > wall.endpoints[1]):
-            # part of entity is beyond wall
-            if ent_pos[prll_dim] < wall.endpoints[0]:
-                dist_past_end = ent_pos[prll_dim] - wall.endpoints[0]
-            else:
-                dist_past_end = ent_pos[prll_dim] - wall.endpoints[1]
-            theta = np.arcsin(dist_past_end / entity.size)
-            dist_min = np.cos(theta) * entity.size + 0.5 * wall.width
         else:  # entire entity lies within bounds of wall
             theta = 0
             dist_past_end = 0
@@ -365,7 +367,8 @@ class World(object):
         k = self.contact_margin
         penetration = np.logaddexp(0, -(dist - dist_min)/k)*k
         force_mag = self.contact_force * delta_pos / dist * penetration
-        force = np.zeros(2)
+        force = np.zeros(3)
         force[perp_dim] = np.cos(theta) * force_mag
-        force[prll_dim] = np.sin(theta) * np.abs(force_mag)
+        force[prll_dim1] = 0
+        force[prll_dim2] = 0
         return force

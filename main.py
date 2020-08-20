@@ -56,7 +56,7 @@ def run(config):
                                        attend_heads=config.attend_heads,
                                        reward_scale=config.reward_scale)
     if config.load_from_save:
-        model.init_from_save_self('./models/swift_scenario/model/run1/model.pt')
+        model.init_from_save_self('./models/swift_scenario_3d/model/run1/model.pt')
     replay_buffer = ReplayBuffer(config.buffer_length, model.nagents,
                                  [obsp.shape[0] for obsp in env.observation_space],
                                  [acsp.shape[0] if isinstance(acsp, Box) else acsp.n
@@ -122,7 +122,7 @@ if __name__ == '__main__':
     parser = argparse.ArgumentParser()
     # parser.add_argument("--env_id", help="Name of environment", default='swift_scenario_backup')
     # parser.add_argument("--env_id", help="Name of environment", default='swift_scenario_2')
-    parser.add_argument("--env_id", help="Name of environment", default='swift_scenario')
+    parser.add_argument("--env_id", help="Name of environment", default='swift_scenario_3d')
     parser.add_argument("--model_name", default='model',
                         help="Name of directory to store " +
                              "model/training contents")
