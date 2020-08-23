@@ -211,7 +211,7 @@ if __name__ == '__main__':
     parser.add_argument("--n_rollout_threads", default=1, type=int)
     parser.add_argument("--buffer_length", default=int(1e6), type=int)
     parser.add_argument("--n_episodes", default=50, type=int)
-    parser.add_argument("--episode_length", default=300, type=int)
+    parser.add_argument("--episode_length", default=500, type=int)
     parser.add_argument("--steps_per_update", default=1024, type=int)
     parser.add_argument("--num_updates", default=4, type=int,
                         help="Number of updates per update cycle")
@@ -229,6 +229,7 @@ if __name__ == '__main__':
     parser.add_argument("--reward_scale", default=1., type=float)
     parser.add_argument("--use_gpu", action='store_true')
     parser.add_argument("--use_handcraft_policy", action='store_true')
+
 
     config = parser.parse_args()
 

@@ -11,6 +11,8 @@ class Point:
         return Point([self.x + xy[0], self.y + xy[1], self.z + xy[2]])
 
 def LinePlaneCollision(planeNormal, planePoint, rayDirection, rayPoint, epsilon=1e-6):
+    # borrow from
+    # https: // rosettacode.org / wiki / Find_the_intersection_of_a_line_with_a_plane  # Python
     flag_intersection = True
     ndotu = planeNormal.dot(rayDirection)
     if abs(ndotu) < epsilon:

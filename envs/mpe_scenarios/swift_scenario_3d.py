@@ -358,7 +358,7 @@ class FieldOfView(object):
 	def check_within_fov(self, p_in): #check if a point p is within fov
 		#input p 2x1 numpy array
 		if isinstance(p_in, Point):
-			p = np.array([p_in.x, p_in.y])
+			p = np.array([p_in.x, p_in.y, p_in.z])
 		else:
 			p = p_in
 		vector1 = np.subtract(p, self._attached_agent.state.p_pos)

@@ -71,7 +71,7 @@ if __name__ == '__main__':
     # handcraft_policy_data = f2.read()
     # f1.close()
     # f2.close()
-    flag_handcraft_policy_data = False
+    flag_handcraft_policy_data = True
     trained_policy_data = np.genfromtxt("./text/trained.txt", dtype='str')
     trained_policy_data = trained_policy_data.astype(np.float)
 
