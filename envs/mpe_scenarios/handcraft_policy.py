@@ -235,6 +235,8 @@ def if_rotate(agent, world, dist_thres):
         cell_center_array = np.array([cell_center.x, cell_center.y, cell_center.z])
         flag_see_the_cell = agent.check_within_fov(cell_center_array) \
                             and doIntersect(cell_center_array, agent.state.p_pos, my_room.window)
+        # print('flag_see_the_cell: ', flag_see_the_cell)
+        # print()
         if flag_see_the_cell and cell.get_cell_state().name == CellState.ExploredHasAgent.name:
             cell_belief = cell.get_belief()
             return False, 0.0, cell_belief
