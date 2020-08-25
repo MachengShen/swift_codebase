@@ -25,6 +25,7 @@ def make_parallel_env(env_id, n_rollout_threads, seed):
     else:
         return SubprocVecEnv([get_env_fn(i) for i in range(n_rollout_threads)])
 
+
 def run(config):
     model_dir = Path('./models') / config.env_id / config.model_name
     if not model_dir.exists():
@@ -46,21 +47,24 @@ def run(config):
     torch.manual_seed(run_num)
     np.random.seed(run_num)
     env = make_parallel_env(config.env_id, config.n_rollout_threads, run_num)
-    model = AttentionSAC.init_from_env(env,
-                                       tau=config.tau,
-                                       pi_lr=config.pi_lr,
-                                       q_lr=config.q_lr,
-                                       gamma=config.gamma,
-                                       pol_hidden_dim=config.pol_hidden_dim,
-                                       critic_hidden_dim=config.critic_hidden_dim,
-                                       attend_heads=config.attend_heads,
-                                       reward_scale=config.reward_scale)
+    model = AttentionSAC.init_from_env(
+        env,
+        tau=config.tau,
+        pi_lr=config.pi_lr,
+        q_lr=config.q_lr,
+        gamma=config.gamma,
+        pol_hidden_dim=config.pol_hidden_dim,
+        critic_hidden_dim=config.critic_hidden_dim,
+        attend_heads=config.attend_heads,
+        reward_scale=config.reward_scale)
     if config.load_from_save:
-        model.init_from_save_self('./models/swift_scenario_3d/model/run1/model.pt')
-    replay_buffer = ReplayBuffer(config.buffer_length, model.nagents,
-                                 [obsp.shape[0] for obsp in env.observation_space],
-                                 [acsp.shape[0] if isinstance(acsp, Box) else acsp.n
-                                  for acsp in env.action_space])
+        model.init_from_save_self(
+            './models/swift_scenario_3d/model/run1/model.pt')
+    replay_buffer = ReplayBuffer(
+        config.buffer_length, model.nagents, [
+            obsp.shape[0] for obsp in env.observation_space], [
+            acsp.shape[0] if isinstance(
+                acsp, Box) else acsp.n for acsp in env.action_space])
     t = 0
     for ep_i in range(0, config.n_episodes, config.n_rollout_threads):
         print("Episodes %i-%i of %i" % (ep_i + 1,
@@ -80,13 +84,14 @@ def run(config):
             # convert actions to numpy arrays
             agent_actions = [ac.data.numpy() for ac in torch_agent_actions]
             # rearrange actions to be per environment
-            actions = [[ac[i] for ac in agent_actions] for i in range(config.n_rollout_threads)]
+            actions = [[ac[i] for ac in agent_actions]
+                       for i in range(config.n_rollout_threads)]
             next_obs, rewards, dones, infos = env.step(actions)
             replay_buffer.push(obs, agent_actions, rewards, next_obs, dones)
             obs = next_obs
             t += config.n_rollout_threads
             if (len(replay_buffer) >= config.batch_size and
-                (t % config.steps_per_update) < config.n_rollout_threads):
+                    (t % config.steps_per_update) < config.n_rollout_threads):
                 if config.use_gpu:
                     model.prep_training(device='gpu')
                 else:
@@ -101,7 +106,9 @@ def run(config):
         ep_rews = replay_buffer.get_average_rewards(
             config.episode_length * config.n_rollout_threads)
         for a_i, a_ep_rew in enumerate(ep_rews):
-            logger.add_scalar('agent%i/mean_episode_rewards' % a_i, a_ep_rew, ep_i)
+            logger.add_scalar(
+                'agent%i/mean_episode_rewards' %
+                a_i, a_ep_rew, ep_i)
         stat_dict = infos[0]
         for key in stat_dict:
             logger.add_scalar(key, stat_dict[key], ep_i)
@@ -109,7 +116,8 @@ def run(config):
         if ep_i % config.save_interval < config.n_rollout_threads:
             model.prep_rollouts(device='cpu')
             os.makedirs(run_dir / 'incremental', exist_ok=True)
-            model.save(run_dir / 'incremental' / ('model_ep%i.pt' % (ep_i + 1)))
+            model.save(run_dir / 'incremental' /
+                       ('model_ep%i.pt' % (ep_i + 1)))
             model.save(run_dir / 'model.pt')
 
     model.save(run_dir / 'model.pt')
@@ -122,7 +130,10 @@ if __name__ == '__main__':
     parser = argparse.ArgumentParser()
     # parser.add_argument("--env_id", help="Name of environment", default='swift_scenario_backup')
     # parser.add_argument("--env_id", help="Name of environment", default='swift_scenario_2')
-    parser.add_argument("--env_id", help="Name of environment", default='swift_scenario_3d')
+    parser.add_argument(
+        "--env_id",
+        help="Name of environment",
+        default='swift_scenario_3d')
     parser.add_argument("--model_name", default='model',
                         help="Name of directory to store " +
                              "model/training contents")

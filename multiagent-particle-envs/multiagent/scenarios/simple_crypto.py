@@ -16,6 +16,7 @@ class CryptoAgent(Agent):
         super(CryptoAgent, self).__init__()
         self.key = None
 
+
 class Scenario(BaseScenario):
 
     def make_world(self):
@@ -42,7 +43,6 @@ class Scenario(BaseScenario):
         # make initial conditions
         self.reset_world(world)
         return world
-
 
     def reset_world(self, world):
         # random properties for agents
@@ -74,14 +74,14 @@ class Scenario(BaseScenario):
             landmark.state.p_pos = np.random.uniform(-1, +1, world.dim_p)
             landmark.state.p_vel = np.zeros(world.dim_p)
 
-
     def benchmark_data(self, agent, world):
         # returns data for benchmarking purposes
         return (agent.state.c, agent.goal_a.color)
 
     # return all agents that are not adversaries
     def good_listeners(self, world):
-        return [agent for agent in world.agents if not agent.adversary and not agent.speaker]
+        return [
+            agent for agent in world.agents if not agent.adversary and not agent.speaker]
 
     # return all agents that are not adversaries
     def good_agents(self, world):
@@ -92,10 +92,13 @@ class Scenario(BaseScenario):
         return [agent for agent in world.agents if agent.adversary]
 
     def reward(self, agent, world):
-        return self.adversary_reward(agent, world) if agent.adversary else self.agent_reward(agent, world)
+        return self.adversary_reward(
+            agent, world) if agent.adversary else self.agent_reward(
+            agent, world)
 
     def agent_reward(self, agent, world):
-        # Agents rewarded if Bob can reconstruct message, but adversary (Eve) cannot
+        # Agents rewarded if Bob can reconstruct message, but adversary (Eve)
+        # cannot
         good_listeners = self.good_listeners(world)
         adversaries = self.adversaries(world)
         good_rew = 0
@@ -120,7 +123,6 @@ class Scenario(BaseScenario):
             rew -= np.sum(np.square(agent.state.c - agent.goal_a.color))
         return rew
 
-
     def observation(self, agent, world):
         # goal color
         goal_color = np.zeros(world.dim_color)
@@ -136,7 +138,8 @@ class Scenario(BaseScenario):
         # communication of all other agents
         comm = []
         for other in world.agents:
-            if other is agent or (other.state.c is None) or not other.speaker: continue
+            if other is agent or (other.state.c is None) or not other.speaker:
+                continue
             comm.append(other.state.c)
 
         confer = np.array([0])
@@ -154,7 +157,8 @@ class Scenario(BaseScenario):
             if prnt:
                 print('speaker')
                 print(agent.state.c)
-                print(np.concatenate([goal_color] + [key] + [confer] + [np.random.randn(1)]))
+                print(np.concatenate([goal_color] +
+                                     [key] + [confer] + [np.random.randn(1)]))
             return np.concatenate([goal_color] + [key])
         # listener
         if not agent.speaker and not agent.adversary:

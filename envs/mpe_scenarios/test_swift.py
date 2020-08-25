@@ -1,15 +1,16 @@
 from .swift_scenario import Scenario, CellState, AudioAction
 import numpy as np
 
+
 class TestClass:
     def test_blue_index_init(self):
         world = Scenario().make_world()
-        #test init room index
+        # test init room index
         for agent in world.dummy_agents:
             assert agent.room_index is not None
 
     def test_belief_init(self):
-        #check belief init correctly
+        # check belief init correctly
         world = Scenario().make_world()
         world.record_old_belief()
         belief = world.old_belief
@@ -25,7 +26,8 @@ class TestClass:
                 if cell.has_agent():
                     total_agent_count += 1
                     assert cell._occupant_agent.room_index is not None
-                    assert np.abs(np.sum(cell._occupant_agent.state.p_pos - np.array([cell._center.x, cell._center.y]))) < 1e-5
+                    assert np.abs(np.sum(cell._occupant_agent.state.p_pos -
+                                         np.array([cell._center.x, cell._center.y]))) < 1e-5
         assert total_agent_count == len(world.dummy_agents)
 
     def test_belief_reward(self):
@@ -50,8 +52,10 @@ class TestClass:
                     assert np.abs(cell.get_belief() - 0.5) < 1e-5
                 else:
                     assert np.abs(cell.get_belief() - 0.5) > 1e-5
-        current_cell_state_binary = np.array([room.get_cell_states_binary() for room in world.rooms]).flatten()
-        assert np.abs(np.sum(current_cell_state_binary) - 4 * len(world.rooms)) < 1e-5
+        current_cell_state_binary = np.array(
+            [room.get_cell_states_binary() for room in world.rooms]).flatten()
+        assert np.abs(np.sum(current_cell_state_binary) -
+                      4 * len(world.rooms)) < 1e-5
 
     def test_reset(self):
         scenario = Scenario()
@@ -76,11 +80,6 @@ class TestClass:
                 if cell.has_agent():
                     total_agent_count += 1
                     assert cell._occupant_agent.room_index is not None
-                    assert np.abs(np.sum(cell._occupant_agent.state.p_pos - np.array([cell._center.x, cell._center.y]))) < 1e-5
+                    assert np.abs(np.sum(cell._occupant_agent.state.p_pos -
+                                         np.array([cell._center.x, cell._center.y]))) < 1e-5
         assert total_agent_count == len(world.dummy_agents)
-
-
-
-
-
-

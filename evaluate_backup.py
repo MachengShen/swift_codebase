@@ -27,6 +27,8 @@ def make_parallel_env(env_id, n_rollout_threads, seed):
     else:
         return SubprocVecEnv([get_env_fn(i) for i in range(n_rollout_threads)])
 """
+
+
 def run(config):
     cover_ratio = []
 
@@ -49,23 +51,29 @@ def run(config):
 
 #    torch.manual_seed(run_num)
 #    np.random.seed(run_num)
-    #env = make_parallel_env(, config.n_rollout_threads, run_num)
-    env = make_env(config.env_id, benchmark=BENCHMARK, discrete_action=True, use_handcraft_policy=config.use_handcraft_policy)
-    model = AttentionSAC.init_from_env(env,
-                                       tau=config.tau,
-                                       pi_lr=config.pi_lr,
-                                       q_lr=config.q_lr,
-                                       gamma=config.gamma,
-                                       pol_hidden_dim=config.pol_hidden_dim,
-                                       critic_hidden_dim=config.critic_hidden_dim,
-                                       attend_heads=config.attend_heads,
-                                       reward_scale=config.reward_scale)
+    # env = make_parallel_env(, config.n_rollout_threads, run_num)
+    env = make_env(
+        config.env_id,
+        benchmark=BENCHMARK,
+        discrete_action=True,
+        use_handcraft_policy=config.use_handcraft_policy)
+    model = AttentionSAC.init_from_env(
+        env,
+        tau=config.tau,
+        pi_lr=config.pi_lr,
+        q_lr=config.q_lr,
+        gamma=config.gamma,
+        pol_hidden_dim=config.pol_hidden_dim,
+        critic_hidden_dim=config.critic_hidden_dim,
+        attend_heads=config.attend_heads,
+        reward_scale=config.reward_scale)
 
     model.init_from_save_self('./models/swift_scenario/model/run2/model.pt')
-    replay_buffer = ReplayBuffer(config.buffer_length, model.nagents,
-                                 [obsp.shape[0] for obsp in env.observation_space],
-                                 [acsp.shape[0] if isinstance(acsp, Box) else acsp.n
-                                  for acsp in env.action_space])
+    replay_buffer = ReplayBuffer(
+        config.buffer_length, model.nagents, [
+            obsp.shape[0] for obsp in env.observation_space], [
+            acsp.shape[0] if isinstance(
+                acsp, Box) else acsp.n for acsp in env.action_space])
     t = 0
 
     update_count = 0
@@ -77,7 +85,8 @@ def run(config):
         model.prep_rollouts(device='cpu')
 
         for et_i in range(config.episode_length):
-            # rearrange observations to be per agent, and convert to torch Variable
+            # rearrange observations to be per agent, and convert to torch
+            # Variable
             torch_obs = [Variable(torch.Tensor(obs[i]).view(1, -1),
                                   requires_grad=False)
                          for i in range(model.nagents)]
@@ -85,16 +94,17 @@ def run(config):
             # get actions as torch Variables
             torch_agent_actions = model.step(torch_obs, explore=False)
             # convert actions to numpy arrays
-            agent_actions = [ac.data.numpy().squeeze() for ac in torch_agent_actions]
+            agent_actions = [ac.data.numpy().squeeze()
+                             for ac in torch_agent_actions]
             # rearrange actions to be per environment
             # actions = [[ac[i] for ac in agent_actions] for i in range(config.n_rollout_threads)]
             # agent_actions[0][5]=1
             # agent_actions[1][5]=1
             # agent_actions[2][5]=1
-            next_obs, rewards, dones, infos = env.step(agent_actions, use_handcraft_policy=config.use_handcraft_policy)
+            next_obs, rewards, dones, infos = env.step(
+                agent_actions, use_handcraft_policy=config.use_handcraft_policy)
             env.render()
             time.sleep(0.1)
-
 
             # # # get actions as torch Variables
             # torch_agent_actions = model.step(torch_obs, explore=True)
@@ -105,14 +115,11 @@ def run(config):
             # next_obs, rewards, dones, infos = env.step(actions)
             # env.render()
 
-
-
-            #if et_i == config.episode_length - 1:
-                #print(infos)
-                #print(type(infos['cover_ratio']))
-                #cover_ratio.append(float(infos[0]['n'][0]['cover_ratio']))
-                #print(infos)
-
+            # if et_i == config.episode_length - 1:
+            # print(infos)
+            # print(type(infos['cover_ratio']))
+            # cover_ratio.append(float(infos[0]['n'][0]['cover_ratio']))
+            # print(infos)
 
 
 #            replay_buffer.push(obs, agent_actions, rewards, next_obs, dones)
@@ -162,7 +169,10 @@ if __name__ == '__main__':
     parser = argparse.ArgumentParser()
     # parser.add_argument("--env_id", help="Name of environment", default='swift_scenario_backup')
     # parser.add_argument("--env_id", help="Name of environment", default='swift_scenario_2')
-    parser.add_argument("--env_id", help="Name of environment", default='swift_scenario')
+    parser.add_argument(
+        "--env_id",
+        help="Name of environment",
+        default='swift_scenario')
     parser.add_argument("--model_name", default='none',
                         help="Name of directory to store " +
                              "model/training contents")

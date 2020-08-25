@@ -1,5 +1,6 @@
 import numpy as np
 
+
 class Point:
     def __init__(self, xy):
         self.x = xy[0]
@@ -7,12 +8,19 @@ class Point:
         self.z = xy[2]
 
     def new_point(self, xy):
-        #generate a new point which is offset by xy
+        # generate a new point which is offset by xy
         return Point([self.x + xy[0], self.y + xy[1], self.z + xy[2]])
 
-def LinePlaneCollision(planeNormal, planePoint, rayDirection, rayPoint, epsilon=1e-6):
+
+def LinePlaneCollision(
+        planeNormal,
+        planePoint,
+        rayDirection,
+        rayPoint,
+        epsilon=1e-6):
     # borrow from
-    # https: // rosettacode.org / wiki / Find_the_intersection_of_a_line_with_a_plane  # Python
+    # https: // rosettacode.org / wiki /
+    # Find_the_intersection_of_a_line_with_a_plane  # Python
     flag_intersection = True
     ndotu = planeNormal.dot(rayDirection)
     if abs(ndotu) < epsilon:
@@ -27,18 +35,23 @@ def LinePlaneCollision(planeNormal, planePoint, rayDirection, rayPoint, epsilon=
 
 # The main function that returns true if
 # the line segment 'p1q1' and 'p2q2' intersect.
+
+
 def doIntersect(p_pos, cell_pos, window):
     endpoints = np.array(window.endpoints)
     planeNormal = np.array([0, 0, 0])
     if window.orient == 'x':
         dim_normal = 0
-        planePoint = np.array([window.axis_pos, np.mean(endpoints[0:2]), np.mean(endpoints[2:])])
+        planePoint = np.array([window.axis_pos, np.mean(
+            endpoints[0:2]), np.mean(endpoints[2:])])
     elif window.orient == 'y':
         dim_normal = 1
-        planePoint = np.array([np.mean(endpoints[0:2]), window.axis_pos, np.mean(endpoints[2:])])
+        planePoint = np.array(
+            [np.mean(endpoints[0:2]), window.axis_pos, np.mean(endpoints[2:])])
     elif window.orient == 'z':
         dim_normal = 2
-        planePoint = np.array([np.mean(endpoints[0:2]), np.mean(endpoints[2:]), window.axis_pos])
+        planePoint = np.array(
+            [np.mean(endpoints[0:2]), np.mean(endpoints[2:]), window.axis_pos])
     else:
         raise ValueError
 
@@ -52,7 +65,8 @@ def doIntersect(p_pos, cell_pos, window):
 
     rayDirection = p_pos - cell_pos
     rayPoint = p_pos
-    flag_linePlaneCollision, Psi = LinePlaneCollision(planeNormal, planePoint, rayDirection, rayPoint, epsilon=1e-6)
+    flag_linePlaneCollision, Psi = LinePlaneCollision(
+        planeNormal, planePoint, rayDirection, rayPoint, epsilon=1e-6)
     if not flag_linePlaneCollision:
         return flag_linePlaneCollision
     else:
@@ -60,11 +74,7 @@ def doIntersect(p_pos, cell_pos, window):
         if (psi_del[0] >= endpoints[0] and
             psi_del[0] <= endpoints[1] and
             psi_del[1] >= endpoints[2] and
-            psi_del[1] <= endpoints[3]):
+                psi_del[1] <= endpoints[3]):
             return True
         else:
             return False
-
-
-
-

@@ -7,11 +7,13 @@ from utils.critics import AttentionCritic
 
 MSELoss = torch.nn.MSELoss()
 
+
 class AttentionSAC(object):
     """
     Wrapper class for SAC agents with central attention critic in multi-agent
     task
     """
+
     def __init__(self, agent_init_params, sa_size,
                  gamma=0.95, tau=0.01, pi_lr=0.01, q_lr=0.01,
                  reward_scale=10.,
@@ -39,11 +41,11 @@ class AttentionSAC(object):
         self.agents = [AttentionAgent(lr=pi_lr,
                                       hidden_dim=pol_hidden_dim,
                                       **params)
-                         for params in agent_init_params]
+                       for params in agent_init_params]
         self.critic = AttentionCritic(sa_size, hidden_dim=critic_hidden_dim,
                                       attend_heads=attend_heads)
-        self.target_critic = AttentionCritic(sa_size, hidden_dim=critic_hidden_dim,
-                                             attend_heads=attend_heads)
+        self.target_critic = AttentionCritic(
+            sa_size, hidden_dim=critic_hidden_dim, attend_heads=attend_heads)
         hard_update(self.target_critic, self.critic)
         self.critic_optimizer = Adam(self.critic.parameters(), lr=q_lr,
                                      weight_decay=1e-3)
@@ -138,14 +140,14 @@ class AttentionSAC(object):
 
         critic_in = list(zip(obs, samp_acs))
         critic_rets = self.critic(critic_in, return_all_q=True)
-        for a_i, probs, log_pi, pol_regs, (q, all_q) in zip(range(self.nagents), all_probs,
-                                                            all_log_pis, all_pol_regs,
-                                                            critic_rets):
+        for a_i, probs, log_pi, pol_regs, (q, all_q) in zip(
+                range(self.nagents), all_probs, all_log_pis, all_pol_regs, critic_rets):
             curr_agent = self.agents[a_i]
             v = (all_q * probs).sum(dim=1, keepdim=True)
             pol_target = q - v
             if soft:
-                pol_loss = (log_pi * (log_pi / self.reward_scale - pol_target).detach()).mean()
+                pol_loss = (log_pi * (log_pi / self.reward_scale -
+                                      pol_target).detach()).mean()
             else:
                 pol_loss = (log_pi * (-pol_target).detach()).mean()
             for reg in pol_regs:
@@ -166,7 +168,6 @@ class AttentionSAC(object):
                 logger.add_scalar('agent%i/grad_norms/pi' % a_i,
                                   grad_norm, self.niter)
 
-
     def update_all_targets(self):
         """
         Update all target networks (called after normal updates have been
@@ -183,9 +184,9 @@ class AttentionSAC(object):
             a.policy.train()
             a.target_policy.train()
         if device == 'gpu':
-            fn = lambda x: x.cuda()
+            def fn(x): return x.cuda()
         else:
-            fn = lambda x: x.cpu()
+            def fn(x): return x.cpu()
         if not self.pol_dev == device:
             for a in self.agents:
                 a.policy = fn(a.policy)
@@ -205,9 +206,9 @@ class AttentionSAC(object):
         for a in self.agents:
             a.policy.eval()
         if device == 'gpu':
-            fn = lambda x: x.cuda()
+            def fn(x): return x.cuda()
         else:
-            fn = lambda x: x.cpu()
+            def fn(x): return x.cpu()
         # only need main policy for rollouts
         if not self.pol_dev == device:
             for a in self.agents:
@@ -218,20 +219,31 @@ class AttentionSAC(object):
         """
         Save trained parameters of all agents into one file
         """
-        self.prep_training(device='cpu')  # move parameters to CPU before saving
-        save_dict = {'init_dict': self.init_dict,
-                     'agent_params': [a.get_params() for a in self.agents],
-                     'critic_params': {'critic': self.critic.state_dict(),
-                                       'target_critic': self.target_critic.state_dict(),
-                                       'critic_optimizer': self.critic_optimizer.state_dict()}}
+        self.prep_training(
+            device='cpu')  # move parameters to CPU before saving
+        save_dict = {
+            'init_dict': self.init_dict,
+            'agent_params': [
+                a.get_params() for a in self.agents],
+            'critic_params': {
+                'critic': self.critic.state_dict(),
+                'target_critic': self.target_critic.state_dict(),
+                'critic_optimizer': self.critic_optimizer.state_dict()}}
         torch.save(save_dict, filename)
 
     @classmethod
-    def init_from_env(cls, env, gamma=0.95, tau=0.01,
-                      pi_lr=0.01, q_lr=0.01,
-                      reward_scale=10.,
-                      pol_hidden_dim=128, critic_hidden_dim=128, attend_heads=4,
-                      **kwargs):
+    def init_from_env(
+            cls,
+            env,
+            gamma=0.95,
+            tau=0.01,
+            pi_lr=0.01,
+            q_lr=0.01,
+            reward_scale=10.,
+            pol_hidden_dim=128,
+            critic_hidden_dim=128,
+            attend_heads=4,
+            **kwargs):
         """
         Instantiate instance of this class from multi-agent environment
 
@@ -275,8 +287,10 @@ class AttentionSAC(object):
         if load_critic:
             critic_params = save_dict['critic_params']
             instance.critic.load_state_dict(critic_params['critic'])
-            instance.target_critic.load_state_dict(critic_params['target_critic'])
-            instance.critic_optimizer.load_state_dict(critic_params['critic_optimizer'])
+            instance.target_critic.load_state_dict(
+                critic_params['target_critic'])
+            instance.critic_optimizer.load_state_dict(
+                critic_params['critic_optimizer'])
         return instance
 
     def init_from_save_self(self, filename, load_critic=False):
@@ -292,5 +306,7 @@ class AttentionSAC(object):
         if load_critic:
             critic_params = save_dict['critic_params']
             instance.critic.load_state_dict(critic_params['critic'])
-            instance.target_critic.load_state_dict(critic_params['target_critic'])
-            instance.critic_optimizer.load_state_dict(critic_params['critic_optimizer'])
+            instance.target_critic.load_state_dict(
+                critic_params['target_critic'])
+            instance.critic_optimizer.load_state_dict(
+                critic_params['critic_optimizer'])

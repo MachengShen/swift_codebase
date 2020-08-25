@@ -51,7 +51,7 @@ class Scenario(BaseScenario):
             landmark.boundary = False
         world.landmarks += world.food
         world.landmarks += world.forests
-        #world.landmarks += self.set_boundaries(world)  # world boundaries now penalized with negative reward
+        # world.landmarks += self.set_boundaries(world)  # world boundaries now penalized with negative reward
         # make initial conditions
         self.reset_world(world)
         return world
@@ -75,7 +75,7 @@ class Scenario(BaseScenario):
 
         for i, l in enumerate(boundary_list):
             l.name = 'boundary %d' % i
-            l.collide == True
+            l.collide
             l.movable = False
             l.boundary = True
             l.color = np.array([0.75, 0.75, 0.75])
@@ -84,12 +84,13 @@ class Scenario(BaseScenario):
 
         return boundary_list
 
-
     def reset_world(self, world):
         # random properties for agents
         for i, agent in enumerate(world.agents):
-            agent.color = np.array([0.45, 0.95, 0.45]) if not agent.adversary else np.array([0.95, 0.45, 0.45])
-            agent.color -= np.array([0.3, 0.3, 0.3]) if agent.leader else np.array([0, 0, 0])
+            agent.color = np.array(
+                [0.45, 0.95, 0.45]) if not agent.adversary else np.array([0.95, 0.45, 0.45])
+            agent.color -= np.array([0.3, 0.3, 0.3]
+                                    ) if agent.leader else np.array([0, 0, 0])
             # random properties for landmarks
         for i, landmark in enumerate(world.landmarks):
             landmark.color = np.array([0.25, 0.25, 0.25])
@@ -122,15 +123,14 @@ class Scenario(BaseScenario):
         else:
             return 0
 
-
     def is_collision(self, agent1, agent2):
         delta_pos = agent1.state.p_pos - agent2.state.p_pos
         dist = np.sqrt(np.sum(np.square(delta_pos)))
         dist_min = agent1.size + agent2.size
         return True if dist < dist_min else False
 
-
     # return all agents that are not adversaries
+
     def good_agents(self, world):
         return [agent for agent in world.agents if not agent.adversary]
 
@@ -138,19 +138,20 @@ class Scenario(BaseScenario):
     def adversaries(self, world):
         return [agent for agent in world.agents if agent.adversary]
 
-
     def reward(self, agent, world):
         # Agents are rewarded based on minimum agent distance to each landmark
         #boundary_reward = -10 if self.outside_boundary(agent) else 0
-        main_reward = self.adversary_reward(agent, world) if agent.adversary else self.agent_reward(agent, world)
+        main_reward = self.adversary_reward(
+            agent, world) if agent.adversary else self.agent_reward(
+            agent, world)
         return main_reward
 
     def outside_boundary(self, agent):
-        if agent.state.p_pos[0] > 1 or agent.state.p_pos[0] < -1 or agent.state.p_pos[1] > 1 or agent.state.p_pos[1] < -1:
+        if agent.state.p_pos[0] > 1 or agent.state.p_pos[0] < - \
+                1 or agent.state.p_pos[1] > 1 or agent.state.p_pos[1] < -1:
             return True
         else:
             return False
-
 
     def agent_reward(self, agent, world):
         # Agents are rewarded based on minimum agent distance to each landmark
@@ -159,11 +160,13 @@ class Scenario(BaseScenario):
         adversaries = self.adversaries(world)
         if shape:
             for adv in adversaries:
-                rew += 0.1 * np.sqrt(np.sum(np.square(agent.state.p_pos - adv.state.p_pos)))
+                rew += 0.1 * \
+                    np.sqrt(np.sum(np.square(agent.state.p_pos - adv.state.p_pos)))
         if agent.collide:
             for a in adversaries:
                 if self.is_collision(a, agent):
                     rew -= 5
+
         def bound(x):
             if x < 0.9:
                 return 0
@@ -178,7 +181,8 @@ class Scenario(BaseScenario):
         for food in world.food:
             if self.is_collision(agent, food):
                 rew += 2
-        rew += 0.05 * min([np.sqrt(np.sum(np.square(food.state.p_pos - agent.state.p_pos))) for food in world.food])
+        rew += 0.05 * \
+            min([np.sqrt(np.sum(np.square(food.state.p_pos - agent.state.p_pos))) for food in world.food])
 
         return rew
 
@@ -189,8 +193,9 @@ class Scenario(BaseScenario):
         agents = self.good_agents(world)
         adversaries = self.adversaries(world)
         if shape:
-            rew -= 0.1 * min([np.sqrt(np.sum(np.square(a.state.p_pos - agent.state.p_pos))) for a in agents])
-            #for adv in adversaries:
+            rew -= 0.1 * \
+                min([np.sqrt(np.sum(np.square(a.state.p_pos - agent.state.p_pos))) for a in agents])
+            # for adv in adversaries:
             #    rew -= 0.1 * min([np.sqrt(np.sum(np.square(a.state.p_pos - adv.state.p_pos))) for a in agents])
         if agent.collide:
             for ag in agents:
@@ -198,7 +203,6 @@ class Scenario(BaseScenario):
                     if self.is_collision(ag, adv):
                         rew += 5
         return rew
-
 
     def observation2(self, agent, world):
         # get positions of all entities in this agent's reference frame
@@ -216,12 +220,17 @@ class Scenario(BaseScenario):
         other_pos = []
         other_vel = []
         for other in world.agents:
-            if other is agent: continue
+            if other is agent:
+                continue
             comm.append(other.state.c)
             other_pos.append(other.state.p_pos - agent.state.p_pos)
             if not other.adversary:
                 other_vel.append(other.state.p_vel)
-        return np.concatenate([agent.state.p_vel] + [agent.state.p_pos] + entity_pos + other_pos + other_vel)
+        return np.concatenate([agent.state.p_vel] +
+                              [agent.state.p_pos] +
+                              entity_pos +
+                              other_pos +
+                              other_vel)
 
     def observation(self, agent, world):
         # get positions of all entities in this agent's reference frame
@@ -235,7 +244,7 @@ class Scenario(BaseScenario):
         inf2 = False
         if self.is_collision(agent, world.forests[0]):
             in_forest[0] = np.array([1])
-            inf1= True
+            inf1 = True
         if self.is_collision(agent, world.forests[1]):
             in_forest[1] = np.array([1])
             inf2 = True
@@ -249,13 +258,20 @@ class Scenario(BaseScenario):
         other_pos = []
         other_vel = []
         for other in world.agents:
-            if other is agent: continue
+            if other is agent:
+                continue
             comm.append(other.state.c)
             oth_f1 = self.is_collision(other, world.forests[0])
             oth_f2 = self.is_collision(other, world.forests[1])
-            #if (inf1 and not oth_f2) or (inf2 and not oth_f1) or (not inf1 and not oth_f1 and not inf2 and not oth_f2) or agent.leader:  #with forest vis
-            if (inf1 and oth_f1) or (inf2 and oth_f2) or (not inf1 and not oth_f1 and not inf2 and not oth_f2) or agent.leader:  #without forest vis
-            #if (in_forest == np.array([-1]) and not self.is_collision(other, world.forests[0])) or (in_forest == np.array([1]) and not self.is_collision(other, world.forests[0])) or agent.leader:
+            # if (inf1 and not oth_f2) or (inf2 and not oth_f1) or (not inf1
+            # and not oth_f1 and not inf2 and not oth_f2) or agent.leader:
+            # #with forest vis
+            if (inf1 and oth_f1) or (inf2 and oth_f2) or (
+                    not inf1 and not oth_f1 and not inf2 and not oth_f2) or agent.leader:  # without forest vis
+                # if (in_forest == np.array([-1]) and not
+                # self.is_collision(other, world.forests[0])) or (in_forest ==
+                # np.array([1]) and not self.is_collision(other,
+                # world.forests[0])) or agent.leader:
                 other_pos.append(other.state.p_pos - agent.state.p_pos)
                 if not other.adversary:
                     other_vel.append(other.state.p_vel)
@@ -280,11 +296,10 @@ class Scenario(BaseScenario):
             else:
                 prey_forest_lead.append(np.array([-1]))
 
-
-        #print(agent.adversary)
-        #print(agent.leader)
-        #print(in_forest)
-        #print(other_pos)
+        # print(agent.adversary)
+        # print(agent.leader)
+        # print(in_forest)
+        # print(other_pos)
         comm = [world.agents[0].state.c]
         #comm = [np.array([0, 0, 0, 0])]
         """
@@ -300,12 +315,27 @@ class Scenario(BaseScenario):
         """
         if agent.adversary and not agent.leader:
             #print(np.concatenate([agent.state.p_vel] + [agent.state.p_pos] + entity_pos + other_pos + other_vel + [in_forest] + comm).shape)
-            return np.concatenate([agent.state.p_vel] + [agent.state.p_pos] + entity_pos + other_pos + other_vel + in_forest + comm)
+            return np.concatenate([agent.state.p_vel] +
+                                  [agent.state.p_pos] +
+                                  entity_pos +
+                                  other_pos +
+                                  other_vel +
+                                  in_forest +
+                                  comm)
         if agent.leader:
-            return np.concatenate(
-                [agent.state.p_vel] + [agent.state.p_pos] + entity_pos + other_pos + other_vel + in_forest + comm)
+            return np.concatenate([agent.state.p_vel] +
+                                  [agent.state.p_pos] +
+                                  entity_pos +
+                                  other_pos +
+                                  other_vel +
+                                  in_forest +
+                                  comm)
         else:
             #print(np.concatenate([agent.state.p_vel] + [agent.state.p_pos] + entity_pos + other_pos + [in_forest] + other_vel).shape)
-            return np.concatenate([agent.state.p_vel] + [agent.state.p_pos] + entity_pos + other_pos + in_forest + other_vel)
-        #"""
-
+            return np.concatenate([agent.state.p_vel] +
+                                  [agent.state.p_pos] +
+                                  entity_pos +
+                                  other_pos +
+                                  in_forest +
+                                  other_vel)
+        # """

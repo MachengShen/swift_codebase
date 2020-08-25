@@ -4,8 +4,9 @@ class Point:
         self.y = xy[1]
 
     def new_point(self, xy):
-        #generate a new point which is offset by xy
+        # generate a new point which is offset by xy
         return Point([self.x + xy[0], self.y + xy[1]])
+
 
 def _onSegment(p, q, r):
     # TODO: does this method use the points defining windows?
@@ -15,6 +16,7 @@ def _onSegment(p, q, r):
             (q.y <= max(p.y, r.y)) and (q.y >= min(p.y, r.y))):
         return True
     return False
+
 
 def _orientation(p, q, r):
     # TODO: does this method use the points defining windows?

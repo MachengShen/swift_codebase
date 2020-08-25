@@ -3,10 +3,12 @@ import torch.nn as nn
 import torch.nn.functional as F
 from utils.misc import onehot_from_logits, categorical_sample
 
+
 class BasePolicy(nn.Module):
     """
     Base policy network
     """
+
     def __init__(self, input_dim, out_dim, hidden_dim=64, nonlin=F.leaky_relu,
                  norm_in=True, onehot_dim=0):
         """
@@ -36,7 +38,7 @@ class BasePolicy(nn.Module):
             out (PyTorch Matrix): Actions
         """
         onehot = None
-        if type(X) is tuple:
+        if isinstance(X, tuple):
             X, onehot = X
         inp = self.in_fn(X)  # don't batchnorm onehot
         if onehot is not None:
@@ -51,6 +53,7 @@ class DiscretePolicy(BasePolicy):
     """
     Policy Network for discrete action spaces
     """
+
     def __init__(self, *args, **kwargs):
         super(DiscretePolicy, self).__init__(*args, **kwargs)
 
@@ -91,7 +94,6 @@ class DiscretePolicy(BasePolicy):
         #     act_audio = onehot_from_logits(probs_audio)
         #
         # return torch.cat([act_u, act_r, act_audio], dim=1)
-
 
         probs = F.softmax(out, dim=1)
         on_gpu = next(self.parameters()).is_cuda

@@ -8,8 +8,10 @@ from multiagent.utils import Point, doIntersect
 
 # def handcraft_policy(agent, world):
 
-DELTA = 1/8
-def handcraft_policy(agent, world)->Action:
+DELTA = 1 / 8
+
+
+def handcraft_policy(agent, world) -> Action:
     # row_index = world.row_index
     # world.rooms = [world.rooms[row_index_] for row_index_ in row_index]
     world.rooms = world.agent_rooms
@@ -17,16 +19,18 @@ def handcraft_policy(agent, world)->Action:
     # TODO: as before, I can do translation and rotation; Macheng can do audio]
     # get_unexplored_room_index
     # agent not close to a unexplored room, or explored but with an agent?
-    # build the room-agent correspondence, then translate to the corresponding room
+    # build the room-agent correspondence, then translate to the corresponding
+    # room
 
     # agent_list[0] goes to room_index[0],
-    # if len(agent_list) > len(room_index), redundant agents goes to room with belief close to 0.5
+    # if len(agent_list) > len(room_index), redundant agents goes to room with
+    # belief close to 0.5
 
     # so far, agent is close to a certain window
     # if agent in agent_list: translate else rotate
     action = Action()
 
-    dist_thres = world.arena_size / world.num_room / 4 / (1*np.sqrt(2))
+    dist_thres = world.arena_size / world.num_room / 4 / (1 * np.sqrt(2))
     dist_thres = world.arena_size / world.num_room / 4 / 2
     # dist_thres = 1
 
@@ -68,9 +72,9 @@ def handcraft_policy(agent, world)->Action:
                 else:
                     translation_action[1] = 1
                     # action.u = 1
-            action.u[0] = -1*(translation_action[1] - translation_action[2])
-            action.u[1] = -1*(translation_action[3] - translation_action[4])
-            action.u = 1*action.u
+            action.u[0] = -1 * (translation_action[1] - translation_action[2])
+            action.u[1] = -1 * (translation_action[3] - translation_action[4])
+            action.u = 1 * action.u
             action.r = 0.0
             action.audio = None
             # print(action.u)
@@ -82,7 +86,8 @@ def handcraft_policy(agent, world)->Action:
             # if action[0] == 4: agent.action.u[1] = +1.0
             # agent.action.u[0] += action[0][1] - action[0][2]
             # agent.action.u[1] += action[0][3] - action[0][4]
-    flag_rotate, rotate_action, cell_belief = if_rotate(agent, world, dist_thres)
+    flag_rotate, rotate_action, cell_belief = if_rotate(
+        agent, world, dist_thres)
     if flag_rotate:
         action.r = rotate_action
         action.u = np.array([0.0, 0.0])
@@ -117,10 +122,14 @@ def if_blue_with_room(agent, world, dist_thres):
     for room_index, room in enumerate(world.rooms):
         room_window_center = 0.5 * np.array([room.window.p1.x + room.window.p2.x,
                                              room.window.p1.y + room.window.p2.y])
-        if np.linalg.norm(agent.state.p_pos - room_window_center) <= dist_thres:
-            if not is_room_all_explored(room) or if_room_has_dummy_inside(room):
+        if np.linalg.norm(
+                agent.state.p_pos -
+                room_window_center) <= dist_thres:
+            if not is_room_all_explored(
+                    room) or if_room_has_dummy_inside(room):
                 # print(np.linalg.norm(agent.state.p_pos - room_window_center)<= dist_thres,
-                #       not is_room_all_explored(room), if_room_has_dummy_inside(room))
+                # not is_room_all_explored(room),
+                # if_room_has_dummy_inside(room))
                 return True, room_index
     # print(np.linalg.norm(agent.state.p_pos - room_window_center) <= dist_thres,
     #       not is_room_all_explored(room), if_room_has_dummy_inside(room))
@@ -133,11 +142,13 @@ def get_translate_agent_list(agent, world, dist_thres):
     # get_unexplored_room_list()
     # get_room_most_uncertain()
     def if_room_close_to_blue(room, world):
-        room_window_center = 0.5*np.array([room.window.p1.x + room.window.p2.x,
-                                       room.window.p1.y + room.window.p2.y])
+        room_window_center = 0.5 * np.array([room.window.p1.x + room.window.p2.x,
+                                             room.window.p1.y + room.window.p2.y])
         for blue_agent in world.agents:
-            if np.linalg.norm(blue_agent.state.p_pos - room_window_center) <= dist_thres:
-                    return True
+            if np.linalg.norm(
+                    blue_agent.state.p_pos -
+                    room_window_center) <= dist_thres:
+                return True
         return False
 
     def get_room_most_uncertain(world):
@@ -168,8 +179,9 @@ def get_translate_agent_list(agent, world, dist_thres):
 def if_rotate(agent, world, dist_thres):
     def rotation_action(agent, my_room):
         rotate_action = 0
-        angle_to_room_center = np.pi + np.arctan2(my_room.center.y - agent.state.p_pos[1],
-                                        my_room.center.x - agent.state.p_pos[0])
+        angle_to_room_center = np.pi + np.arctan2(
+            my_room.center.y - agent.state.p_pos[1],
+            my_room.center.x - agent.state.p_pos[0])
         if agent.state.boresight >= angle_to_room_center:
             # rotate_action = np.array([1, 0])
             rotate_action = -np.pi / 2
@@ -187,9 +199,10 @@ def if_rotate(agent, world, dist_thres):
     my_room = world.rooms[room_index]
     for cell in my_room.cells:
         cell_center = cell.get_cell_center()
-        flag_see_the_cell = agent.check_within_fov(cell_center) \
-                            and doIntersect(cell_center, Point(agent.state.p_pos),my_room.window.p1, my_room.window.p2)
-        if flag_see_the_cell and cell.get_cell_state().name == CellState.ExploredHasAgent.name:
+        flag_see_the_cell = agent.check_within_fov(cell_center) and doIntersect(
+            cell_center, Point(agent.state.p_pos), my_room.window.p1, my_room.window.p2)
+        if flag_see_the_cell and cell.get_cell_state(
+        ).name == CellState.ExploredHasAgent.name:
             cell_belief = cell.get_belief()
             return False, 0.0, cell_belief
     if not is_room_all_explored(my_room):
@@ -206,7 +219,6 @@ def if_rotate(agent, world, dist_thres):
     #     flag_rotate = False
     # print(flag_all_cells_explored,flag_dummy_in_FOV)
     # rotate_action = np.array([0, 0])
-
 
 
 def get_audio_action(agent, world, dist_thres, cell_belief):
@@ -256,4 +268,3 @@ def get_audio_action(agent, world, dist_thres, cell_belief):
 #     # for room/cell with agent, get its belief and find the one closest to 0.5
 #     index = []
 #     return index
-

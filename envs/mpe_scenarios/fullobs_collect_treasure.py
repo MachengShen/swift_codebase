@@ -3,6 +3,7 @@ import seaborn as sns
 from multiagent.core import World, Agent, Landmark, Wall
 from multiagent.scenario import BaseScenario
 
+
 class Scenario(BaseScenario):
     def make_world(self):
         world = World()
@@ -116,7 +117,8 @@ class Scenario(BaseScenario):
         if agent.collector:
             if agent.holding is not None:
                 for d in self.deposits(world):
-                    if d.d_i == agent.holding and self.is_collision(d, agent, world):
+                    if d.d_i == agent.holding and self.is_collision(
+                            d, agent, world):
                         return 1
             else:
                 for t in self.treasures(world):
@@ -124,7 +126,8 @@ class Scenario(BaseScenario):
                         return 1
         else:  # deposit
             for a in self.collectors(world):
-                if a.holding == agent.d_i and self.is_collision(a, agent, world):
+                if a.holding == agent.d_i and self.is_collision(
+                        a, agent, world):
                     return 1
         return 0
 
@@ -146,19 +149,22 @@ class Scenario(BaseScenario):
         shape = True
         if shape:  # reward can optionally be shaped
             # penalize by distance to closest relevant holding agent
-            dists_to_holding = [world.cached_dist_mag[agent.i, a.i] for a in
-                                self.collectors(world) if a.holding == agent.d_i]
+            dists_to_holding = [world.cached_dist_mag[agent.i, a.i]
+                                for a in self.collectors(world) if a.holding == agent.d_i]
             if len(dists_to_holding) > 0:
                 rew -= 0.1 * min(dists_to_holding)
             else:
                 n_visible = 7
                 # get positions of all entities in this agent's reference frame
-                other_agent_inds = [a.i for a in world.agents if (a is not agent and a.collector)]
+                other_agent_inds = [
+                    a.i for a in world.agents if (
+                        a is not agent and a.collector)]
                 closest_agents = sorted(
                     zip(world.cached_dist_mag[other_agent_inds, agent.i],
                         other_agent_inds))[:n_visible]
                 closest_inds = list(i for _, i in closest_agents)
-                closest_avg_dist_vect = world.cached_dist_vect[closest_inds, agent.i].mean(axis=0)
+                closest_avg_dist_vect = world.cached_dist_vect[closest_inds, agent.i].mean(
+                    axis=0)
                 rew -= 0.1 * np.linalg.norm(closest_avg_dist_vect)
         rew += self.global_reward(world)
         return rew

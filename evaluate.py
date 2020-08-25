@@ -28,6 +28,8 @@ def make_parallel_env(env_id, n_rollout_threads, seed):
     else:
         return SubprocVecEnv([get_env_fn(i) for i in range(n_rollout_threads)])
 """
+
+
 def run(config):
     cover_ratio = []
 
@@ -50,24 +52,30 @@ def run(config):
 
 #    torch.manual_seed(run_num)
 #    np.random.seed(run_num)
-    #env = make_parallel_env(, config.n_rollout_threads, run_num)
-    env = make_env(config.env_id, benchmark=BENCHMARK, discrete_action=True, use_handcraft_policy=config.use_handcraft_policy)
-    model = AttentionSAC.init_from_env(env,
-                                       tau=config.tau,
-                                       pi_lr=config.pi_lr,
-                                       q_lr=config.q_lr,
-                                       gamma=config.gamma,
-                                       pol_hidden_dim=config.pol_hidden_dim,
-                                       critic_hidden_dim=config.critic_hidden_dim,
-                                       attend_heads=config.attend_heads,
-                                       reward_scale=config.reward_scale)
+    # env = make_parallel_env(, config.n_rollout_threads, run_num)
+    env = make_env(
+        config.env_id,
+        benchmark=BENCHMARK,
+        discrete_action=True,
+        use_handcraft_policy=config.use_handcraft_policy)
+    model = AttentionSAC.init_from_env(
+        env,
+        tau=config.tau,
+        pi_lr=config.pi_lr,
+        q_lr=config.q_lr,
+        gamma=config.gamma,
+        pol_hidden_dim=config.pol_hidden_dim,
+        critic_hidden_dim=config.critic_hidden_dim,
+        attend_heads=config.attend_heads,
+        reward_scale=config.reward_scale)
 
     # model.init_from_save_self('./models/swift_scenario/model/run9/model.pt')
     model.init_from_save_self('./models/swift_scenario_3d/model/run1/model.pt')
-    replay_buffer = ReplayBuffer(config.buffer_length, model.nagents,
-                                 [obsp.shape[0] for obsp in env.observation_space],
-                                 [acsp.shape[0] if isinstance(acsp, Box) else acsp.n
-                                  for acsp in env.action_space])
+    replay_buffer = ReplayBuffer(
+        config.buffer_length, model.nagents, [
+            obsp.shape[0] for obsp in env.observation_space], [
+            acsp.shape[0] if isinstance(
+                acsp, Box) else acsp.n for acsp in env.action_space])
     t = 0
 
     update_count = 0
@@ -84,7 +92,8 @@ def run(config):
         model.prep_rollouts(device='cpu')
 
         for et_i in range(config.episode_length):
-            # rearrange observations to be per agent, and convert to torch Variable
+            # rearrange observations to be per agent, and convert to torch
+            # Variable
             torch_obs = [Variable(torch.Tensor(obs[i]).view(1, -1),
                                   requires_grad=False)
                          for i in range(model.nagents)]
@@ -92,20 +101,24 @@ def run(config):
             # get actions as torch Variables
             torch_agent_actions = model.step(torch_obs, explore=False)
             # convert actions to numpy arrays
-            agent_actions = [ac.data.numpy().squeeze() for ac in torch_agent_actions]
+            agent_actions = [ac.data.numpy().squeeze()
+                             for ac in torch_agent_actions]
             # rearrange actions to be per environment
             # actions = [[ac[i] for ac in agent_actions] for i in range(config.n_rollout_threads)]
             # agent_actions[0][5]=1
             # agent_actions[1][5]=1
             # agent_actions[2][5]=1
-            next_obs, rewards, dones, infos = env.step(agent_actions, use_handcraft_policy=config.use_handcraft_policy)
+            next_obs, rewards, dones, infos = env.step(
+                agent_actions, use_handcraft_policy=config.use_handcraft_policy)
             # env.render()
             # time.sleep(0.1)
             stats = env.world.stat.get_stats()
             if et_i == 0:
                 cumulative_reward[ep_i, et_i] = rewards[0]
             else:
-                cumulative_reward[ep_i, et_i] = cumulative_reward[ep_i, et_i-1] + rewards[0]
+                cumulative_reward[ep_i,
+                                  et_i] = cumulative_reward[ep_i,
+                                                            et_i - 1] + rewards[0]
             num_room_explored[ep_i, et_i] = stats['num_room_explored']
             num_dummy_agents[ep_i, et_i] = stats['num_dummy_agents']
             max_belief[ep_i, et_i] = stats['max_belief']
@@ -120,14 +133,11 @@ def run(config):
             # next_obs, rewards, dones, infos = env.step(actions)
             # env.render()
 
-
-
-            #if et_i == config.episode_length - 1:
-                #print(infos)
-                #print(type(infos['cover_ratio']))
-                #cover_ratio.append(float(infos[0]['n'][0]['cover_ratio']))
-                #print(infos)
-
+            # if et_i == config.episode_length - 1:
+            # print(infos)
+            # print(type(infos['cover_ratio']))
+            # cover_ratio.append(float(infos[0]['n'][0]['cover_ratio']))
+            # print(infos)
 
 
 #            replay_buffer.push(obs, agent_actions, rewards, next_obs, dones)
@@ -186,9 +196,18 @@ def run(config):
     min_belief_mean = np.mean(min_belief, axis=0)
     min_belief_var = np.var(min_belief, axis=0)
 
-    stats_summary = np.stack((cumulative_reward_mean, cumulative_reward_var, num_room_explored_mean, num_room_explored_var,
-                              num_dummy_agents_mean, num_dummy_agents_var, max_belief_mean, max_belief_var,
-                              min_belief_mean, min_belief_var), axis=0)
+    stats_summary = np.stack(
+        (cumulative_reward_mean,
+         cumulative_reward_var,
+         num_room_explored_mean,
+         num_room_explored_var,
+         num_dummy_agents_mean,
+         num_dummy_agents_var,
+         max_belief_mean,
+         max_belief_var,
+         min_belief_mean,
+         min_belief_var),
+        axis=0)
 
     if config.use_handcraft_policy:
         a_file = open("./text/handcraft.txt", "w")
@@ -202,9 +221,13 @@ def run(config):
     a_file.close()
     plot_array(stats_summary)
 
+
 if __name__ == '__main__':
     parser = argparse.ArgumentParser()
-    parser.add_argument("--env_id", default='swift_scenario_3d', help="Name of environment")
+    parser.add_argument(
+        "--env_id",
+        default='swift_scenario_3d',
+        help="Name of environment")
     parser.add_argument("--model_name", default='none',
                         help="Name of directory to store " +
                              "model/training contents")
@@ -229,7 +252,6 @@ if __name__ == '__main__':
     parser.add_argument("--reward_scale", default=1., type=float)
     parser.add_argument("--use_gpu", action='store_true')
     parser.add_argument("--use_handcraft_policy", action='store_true')
-
 
     config = parser.parse_args()
 
