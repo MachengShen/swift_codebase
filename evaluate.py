@@ -49,9 +49,9 @@ def run(config):
     log_dir = run_dir / 'logs'
     # os.makedirs(log_dir)
     # logger = SummaryWriter(str(log_dir))
-
-#    torch.manual_seed(run_num)
-#    np.random.seed(run_num)
+    seed_num = 7     #200
+    torch.manual_seed(seed_num)
+    np.random.seed(seed_num)
     # env = make_parallel_env(, config.n_rollout_threads, run_num)
     env = make_env(
         config.env_id,
@@ -69,8 +69,8 @@ def run(config):
         attend_heads=config.attend_heads,
         reward_scale=config.reward_scale)
 
-    # model.init_from_save_self('./models/swift_scenario/model/run9/model.pt')
-    model.init_from_save_self('./models/swift_scenario_3d/model/run1/model.pt')
+    # model.init_from_save_self('./models/swift_scenario/model/run1/model.pt')
+    model.init_from_save_self('./models/swift_scenario_3d/model/run3/model.pt')
     replay_buffer = ReplayBuffer(
         config.buffer_length, model.nagents, [
             obsp.shape[0] for obsp in env.observation_space], [
@@ -79,11 +79,20 @@ def run(config):
     t = 0
 
     update_count = 0
-    cumulative_reward = np.zeros((config.n_episodes, config.episode_length))
-    num_room_explored = np.zeros((config.n_episodes, config.episode_length))
-    num_dummy_agents = np.zeros((config.n_episodes, config.episode_length))
-    max_belief = np.zeros((config.n_episodes, config.episode_length))
-    min_belief = np.zeros((config.n_episodes, config.episode_length))
+    flag_one_eps = True if config.n_episodes == 1 else False
+    if not flag_one_eps:
+        cumulative_reward = np.zeros((config.n_episodes, config.episode_length))
+        num_room_explored = np.zeros((config.n_episodes, config.episode_length))
+        num_dummy_agents = np.zeros((config.n_episodes, config.episode_length))
+        max_belief = np.zeros((config.n_episodes, config.episode_length))
+        min_belief = np.zeros((config.n_episodes, config.episode_length))
+    if flag_one_eps:
+        step = np.zeros((config.episode_length, 1))
+        time = np.zeros((config.episode_length, 1))
+        agent_pos = np.zeros((config.episode_length, 9))
+        agent_boresight = np.zeros((config.episode_length, 6))
+        audio_array = np.zeros((config.episode_length, 3))
+        belief_array = np.zeros((config.episode_length, 2))
     for ep_i in range(0, config.n_episodes, config.n_rollout_threads):
         print("Episodes %i-%i of %i" % (ep_i + 1,
                                         ep_i + 1 + config.n_rollout_threads,
@@ -113,17 +122,24 @@ def run(config):
             # env.render()
             # time.sleep(0.1)
             stats = env.world.stat.get_stats()
-            if et_i == 0:
-                cumulative_reward[ep_i, et_i] = rewards[0]
-            else:
-                cumulative_reward[ep_i,
-                                  et_i] = cumulative_reward[ep_i,
-                                                            et_i - 1] + rewards[0]
-            num_room_explored[ep_i, et_i] = stats['num_room_explored']
-            num_dummy_agents[ep_i, et_i] = stats['num_dummy_agents']
-            max_belief[ep_i, et_i] = stats['max_belief']
-            min_belief[ep_i, et_i] = stats['min_belief']
-
+            if not flag_one_eps:
+                if et_i == 0:
+                    cumulative_reward[ep_i, et_i] = rewards[0]
+                else:
+                    cumulative_reward[ep_i,
+                                      et_i] = cumulative_reward[ep_i,
+                                                                et_i - 1] + rewards[0]
+                num_room_explored[ep_i, et_i] = stats['num_room_explored']
+                num_dummy_agents[ep_i, et_i] = stats['num_dummy_agents']
+                max_belief[ep_i, et_i] = stats['max_belief']
+                min_belief[ep_i, et_i] = stats['min_belief']
+            if flag_one_eps:
+                step[et_i] = et_i
+                time[et_i] = et_i * .05
+                agent_pos[et_i, :] = stats['agent_pos']
+                agent_boresight[et_i, :] = stats['agent_boresight']
+                audio_array[et_i, :] = stats['audio_array']
+                belief_array[et_i, :] = stats['belief_array']
             # # # get actions as torch Variables
             # torch_agent_actions = model.step(torch_obs, explore=True)
             # # convert actions to numpy arrays
@@ -181,45 +197,74 @@ def run(config):
     print(cover_ratio)
     '''
     env.close()
-    cumulative_reward_mean = np.mean(cumulative_reward, axis=0)
-    cumulative_reward_var = np.var(cumulative_reward, axis=0)
+    if not flag_one_eps:
+        cumulative_reward_mean = np.mean(cumulative_reward, axis=0)
+        cumulative_reward_var = np.var(cumulative_reward, axis=0)
 
-    num_room_explored_mean = np.mean(num_room_explored, axis=0)
-    num_room_explored_var = np.var(num_room_explored, axis=0)
+        num_room_explored_mean = np.mean(num_room_explored, axis=0)
+        num_room_explored_var = np.var(num_room_explored, axis=0)
 
-    num_dummy_agents_mean = np.mean(num_dummy_agents, axis=0)
-    num_dummy_agents_var = np.var(num_dummy_agents, axis=0)
+        num_dummy_agents_mean = np.mean(num_dummy_agents, axis=0)
+        num_dummy_agents_var = np.var(num_dummy_agents, axis=0)
 
-    max_belief_mean = np.mean(max_belief, axis=0)
-    max_belief_var = np.var(max_belief, axis=0)
+        max_belief_mean = np.mean(max_belief, axis=0)
+        max_belief_var = np.var(max_belief, axis=0)
 
-    min_belief_mean = np.mean(min_belief, axis=0)
-    min_belief_var = np.var(min_belief, axis=0)
+        min_belief_mean = np.mean(min_belief, axis=0)
+        min_belief_var = np.var(min_belief, axis=0)
 
-    stats_summary = np.stack(
-        (cumulative_reward_mean,
-         cumulative_reward_var,
-         num_room_explored_mean,
-         num_room_explored_var,
-         num_dummy_agents_mean,
-         num_dummy_agents_var,
-         max_belief_mean,
-         max_belief_var,
-         min_belief_mean,
-         min_belief_var),
-        axis=0)
+        stats_summary = np.stack(
+            (cumulative_reward_mean,
+             cumulative_reward_var,
+             num_room_explored_mean,
+             num_room_explored_var,
+             num_dummy_agents_mean,
+             num_dummy_agents_var,
+             max_belief_mean,
+             max_belief_var,
+             min_belief_mean,
+             min_belief_var),
+            axis=0)
 
-    if config.use_handcraft_policy:
-        a_file = open("./text/handcraft.txt", "w")
-    else:
-        a_file = open("./text/trained.txt", "w")
 
-    # for row in stats_summary:
-    #     np.savetxt(a_file, row, newline='\n')
-    np.savetxt(a_file, stats_summary, newline='\n')
+        if config.use_handcraft_policy:
+            a_file = open("./text/handcraft.txt", "w")
+        else:
+            a_file = open("./text/trained.txt", "w")
 
-    a_file.close()
-    plot_array(stats_summary)
+        # for row in stats_summary:
+        #     np.savetxt(a_file, row, newline='\n')
+        np.savetxt(a_file, stats_summary, newline='\n')
+        plot_array(stats_summary)
+        a_file.close()
+
+    # stats_summary_2 = np.stack((step, time, agent_pos, agent_boresight), axis=1)
+    if flag_one_eps:
+        stats_summary_2 = np.concatenate([step] + [time] + [agent_pos] + [agent_boresight] + [audio_array] + [belief_array], axis=1)
+        if config.use_handcraft_policy:
+            np.savetxt("./text/handcraft.csv", stats_summary_2, delimiter=",",
+                       header='step, time, '
+                              'agent_1_x, agent_1_y, agent_1_z,'
+                              'agent_2_x, agent_2_y, agent_2_z,'
+                              'agent_3_x, agent_3_y, agent_3_z,'
+                              'agent_1_psi, agent_1_theta,'
+                              'agent_2_psi, agent_2_theta,'
+                              'agent_3_psi, agent_3_theta,'
+                              'agent_1_audio, agent_2_audio, agent_3_audio,'
+                              'max_belief, min_belief,')
+        else:
+            np.savetxt("./text/trained.csv", stats_summary_2, delimiter=",",
+                       header='step, time, '
+                              'agent_1_x, agent_1_y, agent_1_z,'
+                              'agent_2_x, agent_2_y, agent_2_z,'
+                              'agent_3_x, agent_3_y, agent_3_z,'
+                              'agent_1_psi, agent_1_theta,'
+                              'agent_2_psi, agent_2_theta,'
+                              'agent_3_psi, agent_3_theta,'
+                              'agent_1_audio, agent_2_audio, agent_3_audio,'
+                              'max_belief, min_belief,')
+
+
 
 
 if __name__ == '__main__':
@@ -233,13 +278,13 @@ if __name__ == '__main__':
                              "model/training contents")
     parser.add_argument("--n_rollout_threads", default=1, type=int)
     parser.add_argument("--buffer_length", default=int(1e6), type=int)
-    parser.add_argument("--n_episodes", default=50, type=int)
+    parser.add_argument("--n_episodes", default=1, type=int)
     parser.add_argument("--episode_length", default=500, type=int)
     parser.add_argument("--steps_per_update", default=1024, type=int)
     parser.add_argument("--num_updates", default=4, type=int,
                         help="Number of updates per update cycle")
     parser.add_argument("--batch_size",
-                        default=1280000, type=int,
+                        default=128, type=int,
                         help="Batch size for training")
     parser.add_argument("--save_interval", default=1000000, type=int)
     parser.add_argument("--pol_hidden_dim", default=128, type=int)

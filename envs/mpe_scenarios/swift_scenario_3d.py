@@ -5,7 +5,7 @@ import numpy as np
 from multiagent.scenario import BaseScenario
 from enum import Enum, unique
 
-
+FLAG_EVAL_ONE_EPS = True
 class SwiftWolrdStat(object):
     def __init__(self, world):
         self.world = world
@@ -34,6 +34,29 @@ class SwiftWolrdStat(object):
                      }
         if self.world._cached_fov:
             stat_dict['num_room_within_fov'] = self.world._cached_fov
+
+        flag_eval = FLAG_EVAL_ONE_EPS
+        if flag_eval:
+            stat_dict['agent_pos'] = np.concatenate((self.world.agents[0].state.p_pos,
+                                                     self.world.agents[1].state.p_pos,
+                                                     self.world.agents[2].state.p_pos))
+
+            stat_dict['agent_boresight'] = np.concatenate((self.world.agents[0].state.boresight,
+                                                     self.world.agents[1].state.boresight,
+                                                     self.world.agents[2].state.boresight))
+            # print("agent:", 1, "u", self.world.agents[0].action.u, "r", self.world.agents[0].action.r,
+            #       " audio: ", self.world.agents[2].action.audio)
+            audio_array = np.array([0, 0, 0])
+            for i, agent in enumerate(self.world.agents):
+                print("agent:", i, " audio:", agent.action.audio)
+                if agent.action.audio == AudioAction.HandsUp:
+                    audio_array[i] = 1
+                if agent.action.audio == AudioAction.Freeze:
+                    audio_array[i] = 2
+            stat_dict['audio_array'] = audio_array
+
+            belief_array = np.array([max_belief, min_belief])
+            stat_dict['belief_array'] = belief_array
         return stat_dict
 
 
@@ -103,7 +126,9 @@ class SwiftWorld(World):
                             for room in self.rooms]).flatten()
         max_belief, min_belief = np.max(beliefs), np.min(beliefs)
         print('max_belief is: ', max_belief, 'min_belief is: ', min_belief)
+
         for i, agent in enumerate(self.agents):
+            # print("agent:", i, " audio:", agent.action.audio)
 
             # if agent.action.audio is None:
             # 	# print("agent:", i, "u", agent.action.u, "r" ,agent.action.r, " audio: None")
@@ -462,9 +487,12 @@ class Scenario(BaseScenario):
     def make_world(self, use_handcraft_policy=False):
         num_blue = 3
         num_red = 1
-        num_grey = np.random.randint(3) + 1
-        # num_grey = 2
+        # num_grey = np.random.randint(3) + 1
+        num_grey = 3
         num_room = num_red + num_grey
+
+        num_room = num_red + num_grey + np.random.randint(3)
+
         # num_room = 4
         # num_room = np.random.randint(5)
         arena_size = 2.0
@@ -514,6 +542,9 @@ class Scenario(BaseScenario):
         return world
 
     def _set_rooms(self, world, num_room, arena_size):
+        if FLAG_EVAL_ONE_EPS:
+            self.num_room = 6
+
 
         xy_index_all = np.array(
             [[1, 1], [1, 3], [1, 5], [3, 7], [5, 7], [7, 7]])
@@ -560,6 +591,7 @@ class Scenario(BaseScenario):
         world.all_room_index = all_room_index
         world.real_room_index = real_room_index
 
+        print('real_room_index is: ', real_room_index)
         # room_centers = np.array(
         # 	[[-arena_size / 2 + self.room_length / 2 + i * self.room_length, arena_size / 2 - self.room_length / 2] for i in range(num_room)])
         # world.rooms = [Room(Point(room_centers[i, :]), self.room_length, self.room_length) for i in range(num_room)]
@@ -588,6 +620,19 @@ class Scenario(BaseScenario):
         # 	if len(index) > 0:
         # 		dummy_row_index = np.delete(dummy_row_index, index)
         # world.dummy_rooms = [world.all_rooms[row_index_] for row_index_ in dummy_row_index]
+        if FLAG_EVAL_ONE_EPS:
+            self._save_room_info(world)
+
+
+    def _save_room_info(self, world):
+        room_info = np.zeros((self.num_room*2, 8))
+        for i, room_index in enumerate(world.real_room_index):
+            room_info[i, :] = np.concatenate([np.array([i, room_index, self.room_length, self.room_length, self.floor_height])]+
+                                             [world.all_room_centers[room_index, :]])
+        np.savetxt("./text/room_info.csv", room_info, delimiter=",",
+                   header='#, index, '
+                          'length, width, height,'
+                          'room_center_x, room_center_y, room_center_z,')
 
     def _set_room_windows(self, world, num_room, arena_size):
         length = self.room_length
@@ -770,6 +815,17 @@ class Scenario(BaseScenario):
             world.dummy_agents[i].room_index = permuted_index[i]
 
     def _reset_dummy_agents_location(self, world):
+        def save_dummy_info(num_dummy, dummy_agents):
+            dummy_info = np.zeros((num_dummy, 5))
+            for i, dummy_ag in enumerate(dummy_agents):
+                flag_red = 1 if i == 0 else 0
+                dummy_info[i, :] = np.concatenate(
+                    [np.array([i, flag_red])] +
+                    [dummy_ag.state.p_pos])
+            np.savetxt("./text/dummy_info.csv", dummy_info, delimiter=",",
+                       header='index, is_red,'
+                              'dummy_agent_x, dummy_agent_y, dummy_agent_z,')
+
         for room in world.rooms:
             room.reset_room_cell_states()
 
@@ -777,7 +833,24 @@ class Scenario(BaseScenario):
             # agent.state.p_pos = np.random.uniform(0, +(self.arena_size / 2 - self.room_length), world.dim_p)
             world.rooms[agent.room_index].add_agent(agent)
 
+        if FLAG_EVAL_ONE_EPS:
+            num_dummy = len(world.dummy_agents)
+            assert num_dummy == self.num_red + self.num_grey
+            save_dummy_info(num_dummy, world.dummy_agents)
+
+
     def reset_world(self, world):
+        # self.num_grey = np.random.randint(3) + 1
+
+        self.num_room = self.num_red + self.num_grey + np.random.randint(3)
+        # self.num_room = self.num_red + self.num_grey + 0
+
+
+        assert self.num_room <= self.max_room_num_per_dim ** 2, "must be <= maximum room num allowed"
+        assert self.num_room <= self.max_room_num_per_dim * 2 - 2
+        assert self.num_room >= self.num_grey + \
+               self.num_red, "must ensure each room only has less than 1 agent"
+
         self._set_rooms(world, self.num_room, arena_size=self.arena_size)
         self._set_room_windows(
             world,
@@ -847,8 +920,9 @@ class Scenario(BaseScenario):
                     cell_info.extend(
                         [cell_pos, fov_flag, cell.get_cell_state_encoding(), cell.get_belief()])
             else:
-                cell_info.extend(
-                    [-np.ones(3), -np.ones(2), -np.ones(3), -np.ones(1)])
+                for cell in room.cells:
+                    cell_info.extend(
+                        [-np.ones(3), -np.ones(2), -np.ones(3), -np.ones(1)])
 
         output = np.concatenate([agent.state.p_vel] +
                                 [agent.state.p_pos] +
