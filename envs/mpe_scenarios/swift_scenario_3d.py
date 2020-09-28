@@ -5,7 +5,7 @@ import numpy as np
 from multiagent.scenario import BaseScenario
 from enum import Enum, unique
 
-FLAG_EVAL_ONE_EPS = True
+FLAG_EVAL_ONE_EPS = False
 class SwiftWolrdStat(object):
     def __init__(self, world):
         self.world = world
