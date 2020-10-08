@@ -49,7 +49,7 @@ def run(config):
     log_dir = run_dir / 'logs'
     # os.makedirs(log_dir)
     # logger = SummaryWriter(str(log_dir))
-    seed_num = 7     #200
+    seed_num = 400     #3, 20, 40, 60,140,300,400
     torch.manual_seed(seed_num)
     np.random.seed(seed_num)
     # env = make_parallel_env(, config.n_rollout_threads, run_num)
@@ -70,7 +70,7 @@ def run(config):
         reward_scale=config.reward_scale)
 
     # model.init_from_save_self('./models/swift_scenario/model/run1/model.pt')
-    model.init_from_save_self('./models/swift_scenario_3d/model/run3/model.pt')
+    model.init_from_save_self('./models/swift_scenario_3d/model/run7/model.pt')
     replay_buffer = ReplayBuffer(
         config.buffer_length, model.nagents, [
             obsp.shape[0] for obsp in env.observation_space], [

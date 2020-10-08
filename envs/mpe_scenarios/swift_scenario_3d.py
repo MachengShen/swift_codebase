@@ -5,7 +5,7 @@ import numpy as np
 from multiagent.scenario import BaseScenario
 from enum import Enum, unique
 
-FLAG_EVAL_ONE_EPS = False
+FLAG_EVAL_ONE_EPS = True
 class SwiftWolrdStat(object):
     def __init__(self, world):
         self.world = world
@@ -425,7 +425,7 @@ class FieldOfView(object):
             self,
             attached_agent,
             half_view_angle=np.pi / 4,
-            sensing_range=2):
+            sensing_range=1.0):
         self._half_view_angle = half_view_angle
         self._sensing_range = sensing_range
         self._attached_agent = attached_agent

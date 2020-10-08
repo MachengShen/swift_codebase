@@ -59,7 +59,7 @@ def run(config):
         reward_scale=config.reward_scale)
     if config.load_from_save:
         model.init_from_save_self(
-            './models/swift_scenario_3d/model/run1/model.pt')
+            './models/swift_scenario_3d/model/run6/model.pt')
     replay_buffer = ReplayBuffer(
         config.buffer_length, model.nagents, [
             obsp.shape[0] for obsp in env.observation_space], [
@@ -139,8 +139,8 @@ if __name__ == '__main__':
                              "model/training contents")
     parser.add_argument("--n_rollout_threads", default=12, type=int)
     parser.add_argument("--buffer_length", default=int(1e6), type=int)
-    parser.add_argument("--n_episodes", default=60000, type=int)
-    parser.add_argument("--episode_length", default=100, type=int)
+    parser.add_argument("--n_episodes", default=200000, type=int)
+    parser.add_argument("--episode_length", default=300, type=int, help="originally 100 but now longer")
     parser.add_argument("--steps_per_update", default=100, type=int)
     parser.add_argument("--num_updates", default=4, type=int,
                         help="Number of updates per update cycle")
